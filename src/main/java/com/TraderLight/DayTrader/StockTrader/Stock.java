@@ -55,6 +55,7 @@ public class Stock {
 	boolean openShortPositionWithPrice;	
 	double priceForShortPosition;
 	boolean tradeable;
+	int strategyID;
 	static long modifiedTime=0L;
 	Strategy strategy;
 	List<Integer> volumeVector;	
@@ -119,6 +120,10 @@ public class Stock {
 	
 	public static List<Stock> getListOfStocks() {
 		return listOfStocks;
+	}
+	
+	public int getStrategyID() {
+		return strategyID;
 	}
 		
 	// Setters Definition	
@@ -333,6 +338,15 @@ public class Stock {
 			     }
 		        
 		        if (event.isStartElement()) {
+		        	if (event.asStartElement().getName().getLocalPart().equals("strategy")) {
+		        		event = eventReader.nextEvent();
+		                stock.strategyID = Integer.valueOf(event.asCharacters().getData());
+		                continue;
+		        	
+		             }
+			     }
+		        
+		        if (event.isStartElement()) {
 		        	if (event.asStartElement().getName().getLocalPart().equals("tradeable")) {
 		        		event = eventReader.nextEvent();
 		                stock.tradeable = Boolean.parseBoolean(event.asCharacters().getData());
@@ -520,6 +534,15 @@ public class Stock {
 			                continue;		        	
 			             }
 				     }
+			        
+			        if (event.isStartElement()) {
+			        	if (event.asStartElement().getName().getLocalPart().equals("strategy")) {
+			        		event = eventReader.nextEvent();
+			        		modifiedStock.strategyID = Integer.valueOf(event.asCharacters().getData());             
+			                continue;		        	
+			             }
+				     }
+			        
 			        if (event.isStartElement()) {
 			        	if (event.asStartElement().getName().getLocalPart().equals("tradeable")) {
 			        		event = eventReader.nextEvent();

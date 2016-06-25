@@ -98,20 +98,26 @@ public class Main {
 			// Instantiate strategy
 			// Right now we are using the same strategy for all symbols, it may be better to have the choice of strategy for each symbol
 			
-			if (sysconfig.strategy_id == 0) {
+			if (stock.getStrategyID() == 0) {
 				Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
 					stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
 				stock.setStrategy(strategy);				
 				
-			} else if (sysconfig.strategy_id == 1) {
+			} else if ( stock.getStrategyID() == 1) {
 				Strategy strategy = new MeanReversionStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
 						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
 				stock.setStrategy(strategy);
 					
-		   } else if (sysconfig.strategy_id == 2) {
+		   } else if ( stock.getStrategyID() == 2) {
 			   Strategy strategy = new TrendStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
 						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
 			   stock.setStrategy(strategy);
+		   } else {
+			   log.info("Stategy ID not supported, assigning manual as default");
+			   Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+			   stock.setStrategy(strategy);
+			   
 		   }
 			symbols += stock.getSymbol()+",";
 		}

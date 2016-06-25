@@ -31,7 +31,6 @@ public class SystemConfig {
 	String OHPassword;
 	String OHAuthURL;
 	String OHSourceApp;
-	int strategy_id;
 	boolean mock;
 	String qtURL;
 	private static SystemConfig sysConfig = null;
@@ -70,7 +69,6 @@ public class SystemConfig {
 				sysConfig.OHAuthURL= properties.getProperty("OHAuthURL");
 				sysConfig.OHSourceApp = properties.getProperty("OHSourceApp");
 				sysConfig.mock = Boolean.parseBoolean(properties.getProperty("mock"));
-				sysConfig.strategy_id = Integer.parseInt(properties.getProperty("strategy_id"));
 				sysConfig.qtURL = properties.getProperty("qtURL");
 				
 			} catch (IOException e){
