@@ -1,34 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <config>
   <stock>
-    <symbol>GOOG</symbol>
-    <change>6</change>
-    <profit>3</profit>
-    <lot>200</lot> 
-    <closePosition>false</closePosition>
-    <clearMean>false</clearMean>
-    <volume>100</volume>
-    <tradeable>false</tradeable>
-    <bidAskSpread>0.30</bidAskSpread>
-    <impVol>0.20</impVol>
-    <oppositePosition>true</oppositePosition>
-    <optionBidAskSpread>0.40</optionBidAskSpread>
-  </stock>
-    <stock>
-    <symbol>AXP</symbol>
-    <change>6</change>
-    <profit>3</profit>
-    <lot>200</lot> 
-    <closePosition>false</closePosition>
-    <clearMean>false</clearMean>
-    <volume>100</volume>
-    <tradeable>false</tradeable>
-    <bidAskSpread>0.30</bidAskSpread>
-    <impVol>0.20</impVol>
-    <oppositePosition>true</oppositePosition>
-    <optionBidAskSpread>0.40</optionBidAskSpread>
-  </stock>
-  <stock>
     <symbol>GOOGL</symbol>
     <change>6</change>
     <profit>4</profit>
