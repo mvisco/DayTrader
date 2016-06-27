@@ -12,6 +12,7 @@
 package com.TraderLight.DayTrader.Strategy;
 
 import java.text.SimpleDateFormat;
+
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -23,18 +24,32 @@ import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
 
+/**
+ *  This class implements a manual strategy. In this strategy order will NOT be placed automatically instead it will be driven the user in manual fashion by 
+ *  modifying the stock.xml file.
+ *  Definition of states:
+ *    S0 Initial State; 
+ *    S1 Sold one lot;
+ * 	  S2 Bought one lot; 
+ *    STemp used for asynchronous processing to transition between states when order is placed;
+ *    SNull used when a position is closed and flags have not been cleared yet manually ;
+ *    
+ * @author Mario Visco
+ *
+ */
+
+
 public class ManualStrategy extends Strategy{
 	
 	/**
 	 * Definition of states:
-	 * 
-	 * S0 Initial State for mean reversion
-	 * S1 Mean reversion state- Sold one lot
-	 * S2 Mean reversion state- Bought one lot 
-	 * STemp is used for asynchronous processing to transition between states when order is placed
-	 * SNull is used when a position is closed and flags have not been cleared yet manually
-	 * 
-	 **/	
+     * S0 Initial State ;
+     * S1 Sold one lot;
+     * S2 Bought one lot; 
+     * STemp used for asynchronous processing to transition between states when order is placed;
+     * SNull used when a position is closed and flags have not been cleared yet manually ;
+	 *
+	 */
 	enum States {S0, S1, S2, STemp, SNull };
 	States StrategyState ;
 	// We use currentState as a place to store the state from which we are coming when we go to STemp

@@ -44,6 +44,12 @@ import org.w3c.dom.Element;
 
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
+/**
+ *  This class request an order status, the order_id needs to be provided.
+ * 
+ * @author Mario Visco
+ *
+ */
 public class RequestOrderStatusTM {
 	
 	String filledQuantity;
@@ -58,8 +64,8 @@ public class RequestOrderStatusTM {
 	
 	public String requestOrderStatus(String order_id) throws IOException {
 		
-		  String urlstr ="https://services.optionshouse.com/services/orderBookService";
-  		  
+		 
+		    String urlstr = TMSessionControl.getURL() + "services/orderBookService";
 		    URL  url = new URL (urlstr);
 		    URLConnection  urlConn = url.openConnection();
 		    

@@ -12,8 +12,15 @@ import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
 /**
- *  Trend strategy based on daily mean. We sell if the price goes below the daily mean by a certain value or buy if goes above
- *  the daily mean by a certain value. Otherwise we do not anything we just observe.
+ *  Trend strategy based on moving average. We sell if the price goes below the daily mean by a certain value or buy if goes above
+ *  the daily mean by a certain value.
+ *  
+ *  Definition of states:
+ *    S0 Initial State ;
+ *    S1 Sold one lot;
+ * 	  S2 Bought one lot ;
+ *    STemp used for asynchronous processing to transition between states when order is placed;
+ *  
  * 
  * @author Mario Visco
  *
@@ -21,15 +28,7 @@ import com.TraderLight.DayTrader.StockTrader.Logging;
 
 public class TrendStrategy extends Strategy{
 	
-	/**
-	 * Definition of states:
-	 * 
-	 * S0 Initial State for mean reversion
-	 * S1 Mean reversion state- Sold one lot
-	 * S2 Mean reversion state- Bought one lot 
-	 * STemp is used for asynchronous processing to transition between states when order is placed
-	 * 
-	 **/	
+	
 	enum States {S0, S1, S2, STemp };
 	States StrategyState ;
 	// We use currentState as a place to store the state from which we are coming when we go to STemp

@@ -11,6 +11,7 @@
 package com.TraderLight.DayTrader.TradeMonster;
 
 import java.io.BufferedReader;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -36,6 +37,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.TraderLight.DayTrader.StockTrader.Logging;
+/**
+ *  This class cancels an order, the order_id needs to be provided.
+ * 
+ * @author Mario Visco
+ *
+ */
 
 public class CancelOrderTM {
 	
@@ -44,11 +51,12 @@ public class CancelOrderTM {
 	public CancelOrderTM() {
 		
 	}
-	
+	/**
+	 *  This method does the work.
+	 */
 	public void cancelOrder(String order_id) throws IOException {
-		
-		  String urlstr ="https://services.optionshouse.com/services/orderBookService";
-  		  
+		  
+		    String urlstr = TMSessionControl.getURL() + "services/orderBookService";
 		    URL  url = new URL (urlstr);
 		    URLConnection  urlConn = url.openConnection();
 		    

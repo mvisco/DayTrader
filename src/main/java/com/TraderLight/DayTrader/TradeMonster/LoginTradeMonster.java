@@ -26,6 +26,12 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import com.TraderLight.DayTrader.StockTrader.Logging;
+/**
+ *  This class login into Options House and setup the SessionControl to manage the session .
+ * 
+ * @author Mario Visco
+ *
+ */
 
 public class LoginTradeMonster {
 	
@@ -46,7 +52,9 @@ public class LoginTradeMonster {
 		
 		
 		public void login() throws IOException, ParseException {
-		  
+
+			  TMSessionControl.setURL(urlstr);
+			  urlstr=urlstr+"j_acegi_security_check";			
 			  URL  url = new URL (urlstr);
 			  URLConnection  urlConn = url.openConnection();
 			    
@@ -106,6 +114,7 @@ public class LoginTradeMonster {
 			  TMSessionControl.setToken((String)omap.get("token"));
 			  TMSessionControl.setUser((Long)omap.get("userId"));
 			  TMSessionControl.setSourceApp(sourceApp);
+			  
 						
 		}
 		

@@ -19,7 +19,9 @@ import com.TraderLight.DayTrader.StockTrader.Logging;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 
 /**
- *  This class takes care of the orders. It will be used in multi-threading fashion.
+ *  This class manages a single order. It gets called from  AccountMgr and executes in its own thread.
+ *  When the order processing is terminated, the thread terminates abd an asynchronous call to AccountMgr is performed to let it know 
+ *  if the order was placed successfully or not.
  * 
  * @author Mario Visco
  *

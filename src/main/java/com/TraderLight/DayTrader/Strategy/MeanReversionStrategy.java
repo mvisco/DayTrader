@@ -23,7 +23,15 @@ import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
 /**
- *  Mean Reversion strategy based on daily mean.
+ *  This class implements a men reversion strategy. 
+ *  In this strategy orders will  be placed automatically when the security goes above or below a certain threshold. 
+ *  The threshold is calculated as the moving average + or - the expected change.
+ *  Definition of states:
+ *    S0 Initial State for mean reversion;
+ *    S1 Sold one lot;
+ * 	  S2 Bought one lot; 
+ *    STemp used for asynchronous processing to transition between states when order is placed;
+ *  
  * 
  * @author Mario Visco
  *
@@ -31,15 +39,7 @@ import com.TraderLight.DayTrader.StockTrader.Logging;
 
 public class MeanReversionStrategy extends Strategy{
 	
-	/**
-	 * Definition of states:
-	 * 
-	 * S0 Initial State for mean reversion
-	 * S1 Mean reversion state- Sold one lot
-	 * S2 Mean reversion state- Bought one lot 
-	 * STemp is used for asynchronous processing to transition between states when order is placed
-	 * 
-	 **/	
+		
 	enum States {S0, S1, S2, STemp };
 	States StrategyState ;
 	// We use currentState as a place to store the state from which we are coming when we go to STemp

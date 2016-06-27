@@ -44,6 +44,12 @@ import org.w3c.dom.Element;
 
 import com.TraderLight.DayTrader.StockTrader.Logging;;
 
+/**
+ *  This class places an order with Option House and store the order_id.
+ * 
+ * @author Mario Visco
+ *
+ */
 public class CreateStockOrderTM {
 	public static final Logger log = Logging.getLogger(true);
 	String order_id="";
@@ -53,8 +59,7 @@ public class CreateStockOrderTM {
 		String action;
 		String ordtype;
 
-		
-		    String urlstr ="https://services.optionshouse.com/services/orderStockService";
+		    String urlstr = TMSessionControl.getURL() + "services/orderStockService";
 	  		String sourceApp = TMSessionControl.getSourceApp();
 		    URL  url = new URL (urlstr);
 		    URLConnection  urlConn = url.openConnection();

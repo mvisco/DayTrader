@@ -22,7 +22,9 @@ import com.TraderLight.DayTrader.StockTrader.Logging;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 
 /**
- *  This class initiates and keeps track of the trading we make, it also oversees the risk management aspects.
+ *  This class has many functions: 1) is the entry point to place orders from all stock strategies; 2) keeps track of all the positions we open and close
+ *  through the trading day; 3) keeps track of the cash account; 4) implements risk management
+ *  
  * 
  * @author Mario Visco
  *

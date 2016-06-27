@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
 /**
- *  This class creates the object that includes all the information for the level one quote for a stock symbol.
+ *  This class creates the object that includes all the information that we receive for a Level One Quote from the market.
  * 
  * @author Mario Visco
  *

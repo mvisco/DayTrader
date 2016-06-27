@@ -23,7 +23,7 @@ import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
 /**
- *  Basic strategy class to be extended.
+ *  Basic strategy class that is the ancestor of all strategy classes.
  * 
  * @author Mario Visco
  *

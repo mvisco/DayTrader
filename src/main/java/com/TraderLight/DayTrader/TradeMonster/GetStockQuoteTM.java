@@ -41,6 +41,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
+/**
+ *  This class queries Options House for a stock quote (bid and ask) .
+ * 
+ * @author Mario Visco
+ *
+ */
 
 public class GetStockQuoteTM {
 	
@@ -54,7 +60,8 @@ public class GetStockQuoteTM {
 	
 	public  String  getStockQuote(String symbol) throws IOException {
 			
-		  String urlstr = "https://services.optionshouse.com/services/quotesService";
+		  
+		    String urlstr = TMSessionControl.getURL() + "services/quotesService";
 		  		  		  
 		    URL  url = new URL (urlstr);
 		    URLConnection  urlConn = url.openConnection();

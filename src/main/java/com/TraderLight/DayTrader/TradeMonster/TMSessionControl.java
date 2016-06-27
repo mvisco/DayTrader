@@ -17,6 +17,12 @@ import org.apache.log4j.Logger;
 
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
+/**
+ *  This class stores all the info needed to manage the REST session with Options House.
+ * 
+ * @author Mario Visco
+ *
+ */
 public class TMSessionControl {
 	
 	private static String sessionid;
@@ -28,6 +34,7 @@ public class TMSessionControl {
 	private static String sourceApp;
 	private static List<String> cookies=new ArrayList<String>();
 	public static final Logger log = Logging.getLogger(true);
+	private static String url;
 	
 	public static String getSessionid() {
 		if(sessionid==null){
@@ -40,6 +47,10 @@ public class TMSessionControl {
 	public static void setSessionid(String sessionid) {
 		TMSessionControl.sessionid = sessionid;
 		
+	}
+	
+	public static void setURL(String url) {
+		TMSessionControl.url=url;
 	}
 
 	public static void setToken(String token) {
@@ -95,5 +106,9 @@ public class TMSessionControl {
 	
     public static String getSourceApp() {
     	return TMSessionControl.sourceApp;
+    }
+    
+    public static String getURL() {
+    	return TMSessionControl.url;
     }
 }
