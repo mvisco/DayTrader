@@ -157,7 +157,7 @@ public class TrendStrategy extends Strategy{
 			// We open a position if the value goes below the mean by objective_change in automatic fashion 
 			// or if there is a manual  intervention that tells us to open a short position
 			
-		    if ( (currentBid <= (mean + this.objective_change))  
+		    if ( (currentBid <= (mean - this.objective_change))  
 		    		|| (openShortPositionWithPrice && (currentBid >= shortPositionPrice)) ){
 				
 				log.info("State S0  attempting to buy  one lot of stocks for symbol: " + quote.getSymbol());
@@ -170,7 +170,7 @@ public class TrendStrategy extends Strategy{
 			// We open a position if the value goes above  the mean by objective_change in automatic fashion 
 			// or if there is a manual  intervention that tells us to open a long position
 		    			    	
-		    } else if ( (currentAsk >= (mean - this.objective_change))  
+		    } else if ( (currentAsk >= (mean + this.objective_change))  
 		    		|| (openLongPositionWithPrice && (currentAsk <= longPositionPrice)) ) {
 		    		
 		    	log.info("State S0:  attempting to buy one lot of stocks for symbol: " + quote.getSymbol());
