@@ -68,7 +68,11 @@ public class SystemConfig {
 				sysConfig.OHPassword = properties.getProperty("OHPassword");
 				sysConfig.OHAuthURL= properties.getProperty("OHAuthURL");
 				sysConfig.OHSourceApp = properties.getProperty("OHSourceApp");
-				sysConfig.mock = Boolean.parseBoolean(properties.getProperty("mock"));
+				if (properties.getProperty("mock").contains("true")) {
+					sysConfig.mock=true;
+				} else {
+					sysConfig.mock=false;
+				}
 				sysConfig.qtURL = properties.getProperty("qtURL");
 				
 			} catch (IOException e){
