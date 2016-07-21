@@ -239,7 +239,8 @@ public class Main {
 					log.info("Closing all positions.........");
 					log.info("Closing all positions.........");
 					log.info("-------------------------------");
-
+                    //TODO Close the positions
+					
 					//Wait for 1 minute to wait for all  orders to close and then analyze trades
 					try {
 			    		Thread.sleep(60000);

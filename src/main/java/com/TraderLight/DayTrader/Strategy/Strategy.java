@@ -161,4 +161,14 @@ public abstract class  Strategy {
 		// To be overridden in children
 		return;
 	 }
+
+	public void closePositions(Level1Quote newQuote) {
+		return;
+		
+	}
+
+	public void setStateToS0() {
+		// TODO Auto-generated method stub
+		
+	}
 }

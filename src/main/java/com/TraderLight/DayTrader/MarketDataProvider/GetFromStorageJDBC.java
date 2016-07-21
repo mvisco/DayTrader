@@ -1,4 +1,4 @@
-package com.noname.MarketDataStorage;
+package com.TraderLight.DayTrader.MarketDataProvider;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,11 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
-
 import org.apache.log4j.Logger;
-import org.jfree.util.Log;
+import com.TraderLight.DayTrader.StockTrader.Logging;
 
-import com.noname.TraderLight.Logging;
 
 public class GetFromStorageJDBC {
 	public static final Logger log = Logging.getLogger(true);

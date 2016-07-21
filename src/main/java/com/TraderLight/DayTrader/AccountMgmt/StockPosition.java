@@ -81,4 +81,8 @@ public class StockPosition {
 		return quantity;
 	}
 
+	public double getGain() {
+		return priceSold - priceBought;
+	}
+
 }

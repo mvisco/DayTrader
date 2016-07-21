@@ -50,6 +50,8 @@ public class Level1Quote {
     double open = 0;  
     double low52week = 0;   
     double high52week = 0;
+    int id = 0;
+    String isin = "";
     
     public Level1Quote() { } ;
 

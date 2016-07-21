@@ -306,5 +306,13 @@ public class AccountMgr {
 		this.max_number_of_positions=max_number;
 	}
 	
+	public List<StockPosition> getStockPosition() {
+		return positions;
+	}
+
+	public void resetAcctMgr() {
+		// TODO Auto-generated method stub
+		
+	}
 
 }
