@@ -33,7 +33,7 @@ public class GetFromStorageJDBC {
 		
 		// Only establish  connection if connection not already established
 		if (this.con == null ) {		
-			 String url = "jdbc:mysql://localhost/traderlight2014";			 
+			 String url = "jdbc:mysql://192.168.1.108/traderlight2016-1";			 
 			// String url = "jdbc:mysql://192.168.1.108/traderlight2016-2";
 				try {
 					this.con = DriverManager.getConnection(url,"root", "password");

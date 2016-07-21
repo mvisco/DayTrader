@@ -42,6 +42,14 @@ public class MainSimulation {
 		int closeOpeningIndex;
 		int length = args.length;
 		
+		initialDayIndex.add(30717701);
+		initialDayIndex.add(31379836);
+		
+		
+		
+		finalDayIndex.add(31379836);
+		finalDayIndex.add(32031710);
+		
         if (length <= 0) {
             log.info(" Broker is missing in command line. Brokers supported is TM");
             log.info("Quitting.....");
@@ -145,7 +153,7 @@ public class MainSimulation {
 						continue;
 					}
 					
-					
+					log.info(newQuote.getSymbol());
 					//epService.getEPRuntime().sendEvent(newQuote);
 					//check portfolio value every 1000 symbols approx 20 seconds
 					
