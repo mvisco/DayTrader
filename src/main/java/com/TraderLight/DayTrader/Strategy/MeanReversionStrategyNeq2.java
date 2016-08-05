@@ -1,3 +1,5 @@
+package com.TraderLight.DayTrader.Strategy;
+
 /*
  * Copyright 2016 Mario Visco, TraderLight LLC.
  * 
@@ -9,7 +11,6 @@
  * See the License for the specific language governing permissions and limitations under the License.
  **/
 
-package com.TraderLight.DayTrader.Strategy;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -21,15 +22,18 @@ import org.apache.log4j.Logger;
 import com.TraderLight.DayTrader.AccountMgmt.AccountMgr;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
+import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy.States;
 
 /**
- *  This class implements a men reversion strategy. 
+ *  This class implements a men reversion strategy doubling down . 
  *  In this strategy orders will  be placed automatically when the security goes above or below a certain threshold. 
  *  The threshold is calculated as the moving average + or - the expected change.
  *  Definition of states:
  *    S0 Initial State for mean reversion;
  *    S1 Sold one lot;
- * 	  S2 Bought one lot; 
+ * 	  S2 Bought one lot;
+ *    S3 Sold 2 lots
+ *    S4 Bought 2 lots 
  *    STemp used for asynchronous processing to transition between states when order is placed;
  *  
  * 
@@ -37,10 +41,10 @@ import com.TraderLight.DayTrader.StockTrader.Logging;
  *
  */
 
-public class MeanReversionStrategy extends Strategy{
+public class MeanReversionStrategyNeq2 extends Strategy{
 	
 		
-	enum States {S0, S1, S2, STemp };
+	enum States {S0, S1, S2, S3, S4, STemp };
 	States StrategyState ;
 	// We use currentState as a place to store the state from which we are coming when we go to STemp
 	// StrategyState will be STemp in that case.
@@ -61,12 +65,12 @@ public class MeanReversionStrategy extends Strategy{
 	
 	private final String OPEN = "open";
 	private final String CLOSE = "close";
-	//private final String UPDATE = "update";
+	private final String UPDATE = "update";
 	private final String BUY = "buy";
 	private final String SELL = "sell";
 	
 	
-	public MeanReversionStrategy(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
+	public MeanReversionStrategyNeq2(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
 			double profit, List<Integer> v) {
 		
 		super(symbol, symbol_lot, change, isTradeable, account, loss, profit, v);
@@ -141,7 +145,7 @@ public class MeanReversionStrategy extends Strategy{
 		 
 		deltaVolume = avgVolume/volumePortion;
 		count++;
-		if ( (count % 10) == 0 ) {
+		if ( (count % 60) == 0 ) {
 		    log.info(quote.getSymbol() +  " State " + StrategyState);
 		    log.info("Bid : " + Math.round(currentBid*100)/100.0 + " ,Ask : " + Math.round(currentAsk*100)/100.0 +" ; Mean is: " + Math.round(mean*100)/100.0 + " ;difference is " + 
 		         Math.round((currentPrice-mean)*100)/100.0 + " ; objective_change is " + this.objective_change);
@@ -160,7 +164,7 @@ public class MeanReversionStrategy extends Strategy{
 		}
 		// Do not trade before 7:35
 		if ( (hours == 7) && (minutes <= 34) ) {
-			log.info("Not time yet to trade, time is: " + quote.getCurrentDateTime());
+			//log.info("Not time yet to trade, time is: " + quote.getCurrentDateTime());
 			return;
 		}	
 			
@@ -181,7 +185,7 @@ public class MeanReversionStrategy extends Strategy{
 				this.currentState = States.S0;
 				this.desiredState=States.S1;
 				this.StrategyState=States.STemp;
-				this.possiblePrice=currentPrice;				
+				this.possiblePrice=currentBid;				
 				account.buy_or_sell(SELL, OPEN, quote, lot, this);
 				
 			// We open a position if the value goes below  the mean by objective_change in automatic fashion 
@@ -195,7 +199,7 @@ public class MeanReversionStrategy extends Strategy{
 				this.currentState = States.S0;
 				this.desiredState=States.S2;
 				this.StrategyState = States.STemp;
-				this.possiblePrice=currentPrice;					
+				this.possiblePrice=currentAsk;					
 				account.buy_or_sell(BUY, OPEN, quote, lot, this);
 				
 		    } else {
@@ -214,17 +218,25 @@ public class MeanReversionStrategy extends Strategy{
           
 				if ( (currentAsk <= this.price-this.profit) ) {
 					log.info("State S1 attempting to close position at profit on symbol" + quote.getSymbol());
+					this.currentState = States.S1;
+				    this.desiredState=States.S0;
+				    this.StrategyState = States.STemp;
+				    this.possiblePrice = 0;				
+				    account.buy_or_sell(BUY, CLOSE, quote, lot, this);
+				    // We clear the mean at the end of every cycle
+				    clearMean();
 				} else {
-					log.info("State S1 attempting to close position at loss on symbol" + quote.getSymbol());
+					
+					log.info("State S1:  attempting to sell another lot of stocks for symbol: " + quote.getSymbol() + " at bid " + currentBid);
+					log.info("Date is " + getDate);
+					this.currentState = States.S1;
+					this.desiredState=States.S3;
+					this.StrategyState=States.STemp;
+					this.possiblePrice=(this.price+currentBid)/2.0;				
+					account.buy_or_sell(SELL, UPDATE, quote, lot, this);
 				}
 				
-				this.currentState = States.S1;
-				this.desiredState=States.S0;
-				this.StrategyState = States.STemp;
-				this.possiblePrice = 0;				
-				account.buy_or_sell(BUY, CLOSE, quote, lot, this);
-				// We clear the mean at the end of every cycle
-				clearMean();
+				
             }
             
 		    break;
@@ -238,20 +250,69 @@ public class MeanReversionStrategy extends Strategy{
             	
 				if (currentBid >= (this.price+this.profit)) {
 					log.info("State S2 attempting to close position at profit on symbol" + quote.getSymbol());
+					this.currentState = States.S2;
+				    this.desiredState=States.S0;
+				    this.StrategyState = States.STemp;
+				    this.possiblePrice = 0;	
+				    account.buy_or_sell(SELL, CLOSE, quote, lot, this);
+				    // We clear the mean at the end of every cycle
+				    clearMean(); 
 				} else {
-					log.info("State S2 attempting to close position at loss on symbol" + quote.getSymbol());
-				}
-            					
-				this.currentState = States.S2;
-				this.desiredState=States.S0;
-				this.StrategyState = States.STemp;
-				this.possiblePrice = 0;	
-				account.buy_or_sell(SELL, CLOSE, quote, lot, this);
-				// We clear the mean at the end of every cycle
-				clearMean();          		    	
+					
+					log.info("State S2  attempting to buy  another lot of stocks for symbol: " + quote.getSymbol()+ " at ask " + currentAsk);
+					log.info("Date is " + getDate);
+					this.currentState = States.S2;
+					this.desiredState=States.S4;
+					this.StrategyState = States.STemp;
+					this.possiblePrice=(this.price+currentAsk)/2.0;				
+					account.buy_or_sell(BUY, UPDATE, quote, lot, this);
+					
+				}				         		    	
 		    }
             
 		    break;
+		    
+		case S3:
+			
+			if ( (currentAsk <= this.price-this.profit) || (currentAsk >= (this.price+this.loss)) ) {	
+				if ( (currentAsk <= this.price-this.profit) ) {
+					log.info("State S3 attempting to close position at profit on symbol" + quote.getSymbol());
+				} else {
+					log.info("State S3 attempting to close position at loss on symbol" + quote.getSymbol());
+				}
+				
+				this.currentState = States.S3;
+				this.desiredState=States.S0;
+				this.StrategyState = States.STemp;
+				this.possiblePrice = 0;				
+				account.buy_or_sell(BUY, CLOSE, quote, lot, this);
+				// We clear the mean at the end of every cycle
+				clearMean();
+			}
+			
+			
+			break;
+			
+		case S4:
+			
+			 if ( (currentBid >= (this.price+this.profit)) || (currentBid <= (this.price - this.loss)) ){
+	            	
+					if (currentBid >= (this.price+this.profit)) {
+						log.info("State S2 attempting to close position at profit on symbol" + quote.getSymbol());
+					} else {
+						log.info("State S2 attempting to close position at loss on symbol" + quote.getSymbol());
+					}
+	            					
+					this.currentState = States.S4;
+					this.desiredState=States.S0;
+					this.StrategyState = States.STemp;
+					this.possiblePrice = 0;	
+					account.buy_or_sell(SELL, CLOSE, quote, lot, this);
+					// We clear the mean at the end of every cycle
+					clearMean();          		    	
+			    }
+			
+			break;
 		
 		case STemp:
 			//Nothing to do in this state we are waiting for the order processing to come back
@@ -273,7 +334,8 @@ public class MeanReversionStrategy extends Strategy{
 	    
 		switch (StrategyState) {
 
-		    case S1:	
+		    case S1:
+		    case S3:
 		    	log.info("State S1 attempting to close position on symbol" + symbol);
 		    	this.desiredState = States.S0;
 			    this.currentState= StrategyState;
@@ -282,7 +344,8 @@ public class MeanReversionStrategy extends Strategy{
 		    	clearMean();
 		    	break;
 		    	
-		    case S2:	
+		    case S2:
+		    case S4:
 		    	log.info("State S2 attempting to close position on symbol" + symbol);
 		    	this.desiredState = States.S0;
 			    this.currentState= StrategyState;
@@ -316,7 +379,7 @@ public class MeanReversionStrategy extends Strategy{
 			log.info(" ");
 			log.info(" ");
 			this.StrategyState = this.desiredState;
-			this.price=Double.parseDouble(price);
+			this.price=this.possiblePrice;
 			this.currentState=this.desiredState;
     		
     	} else {
@@ -433,3 +496,4 @@ public class MeanReversionStrategy extends Strategy{
 
 
 }
+

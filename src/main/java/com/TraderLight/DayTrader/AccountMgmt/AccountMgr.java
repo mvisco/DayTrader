@@ -307,11 +307,14 @@ public class AccountMgr {
 	}
 	
 	public List<StockPosition> getStockPosition() {
-		return positions;
+		return historyPositions;
 	}
 
 	public void resetAcctMgr() {
-		// TODO Auto-generated method stub
+		positions = new ArrayList<StockPosition>();	
+		historyPositions = new ArrayList<StockPosition>();
+		currentTradeCost=0D;
+		
 		
 	}
 

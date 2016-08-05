@@ -44,8 +44,11 @@ public class StockPosition {
 		
 		// this assumes update is of the same quantity that we currently have
 		this.quantity = this.quantity+q;
-		this.priceBought = (priceBought+price)/2.0;
-		
+		if (long_short) {
+			this.priceBought = (priceBought+price)/2.0;
+		} else {
+			this.priceSold = (priceSold+price)/2.0;
+		}		
 	}
 	
 	public void closePosition(double p) {
@@ -82,7 +85,7 @@ public class StockPosition {
 	}
 
 	public double getGain() {
-		return priceSold - priceBought;
+		return (priceSold - priceBought)*quantity;
 	}
 
 }

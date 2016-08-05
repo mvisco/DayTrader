@@ -17,6 +17,7 @@ import com.TraderLight.DayTrader.MarketDataProvider.GetFromStorageJDBC;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy;
+import com.TraderLight.DayTrader.Strategy.MeanReversionStrategyNeq2;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 import com.TraderLight.DayTrader.Strategy.TrendStrategy;
 
@@ -42,13 +43,77 @@ public class MainSimulation {
 		int closeOpeningIndex;
 		int length = args.length;
 		
-		initialDayIndex.add(30717701);
-		initialDayIndex.add(31379836);
 		
+		initialDayIndex.add(71885709);    // Mon Nov 03 00:00:00 MST 2014
+		initialDayIndex.add(72526956);    // Wed Nov 05 00:00:00 MST 2014
+		initialDayIndex.add(73164096);    // Thu Nov 06 00:00:00 MST 2014
+		initialDayIndex.add(73801605);    // Fri Nov 07 00:00:00 MST 2014
+		initialDayIndex.add(74432114);    // Mon Nov 10 00:00:00 MST 2014
+		initialDayIndex.add(75072318);    // Tue Nov 11 00:00:00 MST 2014
+		initialDayIndex.add(75698675);    // Wed Nov 12 00:00:00 MST 2014
+		initialDayIndex.add(76329501);    // Thu Nov 13 00:00:00 MST 2014
+		initialDayIndex.add(76967953);    // Fri Nov 14 00:00:00 MST 2014
+		initialDayIndex.add(77594228);    // Mon Nov 17 00:00:00 MST 2014
+		initialDayIndex.add(78231819);    // Tue Nov 18 00:00:00 MST 2014
+		initialDayIndex.add(78868508);    // Wed Nov 19 00:00:00 MST 2014
+		initialDayIndex.add(79517251);    // Thu Nov 20 00:00:00 MST 2014
+		initialDayIndex.add(80160090);    // Fri Nov 21 00:00:00 MST 2014
+		initialDayIndex.add(80808177);    // Mon Nov 24 00:00:00 MST 2014
+		initialDayIndex.add(81445112);    // Tue Nov 25 00:00:00 MST 2014
+		initialDayIndex.add(82084507);    // Wed Nov 26 00:00:00 MST 2014
 		
+		/*		
+		initialDayIndex.add(82724353);    // Tue Dec 02 00:00:00 MST 2014
+		initialDayIndex.add(83359033);    // Wed Dec 03 00:00:00 MST 2014
+		initialDayIndex.add(83995968);    // Thu Dec 04 00:00:00 MST 2014
+		initialDayIndex.add(84634051);    // Fri Dec 05 00:00:00 MST 2014
+		initialDayIndex.add(85268034);    // Mon Dec 08 00:00:00 MST 2014
+		initialDayIndex.add(85907017);    // Tue Dec 09 00:00:00 MST 2014
+		initialDayIndex.add(86547316);    // Wed Dec 10 00:00:00 MST 2014
+		initialDayIndex.add(87179823);    // Thu Dec 11 00:00:00 MST 2014
+		initialDayIndex.add(87812248);    // Fri Dec 12 00:00:00 MST 2014
+		initialDayIndex.add(88452673);    // Mon Dec 15 00:00:00 MST 2014
+		initialDayIndex.add(89088098);    // Tue Dec 16 00:00:00 MST 2014
+		initialDayIndex.add(89714197);    // Wed Dec 17 00:00:00 MST 2014
+		initialDayIndex.add(90356708);    // Thu Dec 18 00:00:00 MST 2014
+		initialDayIndex.add(90994996);    // Fri Dec 19 00:00:00 MST 2014
+		*/
 		
-		finalDayIndex.add(31379836);
-		finalDayIndex.add(32031710);
+		finalDayIndex.add(72526956);    // Mon Nov 03 00:00:00 MST 2014
+		finalDayIndex.add(73164096);    // Wed Nov 05 00:00:00 MST 2014
+		finalDayIndex.add(73801605);    // Thu Nov 06 00:00:00 MST 2014
+		finalDayIndex.add(74432114);    // Fri Nov 07 00:00:00 MST 2014
+		finalDayIndex.add(75072318);    // Mon Nov 10 00:00:00 MST 2014
+		finalDayIndex.add(75698675);    // Tue Nov 11 00:00:00 MST 2014
+		finalDayIndex.add(76329501);    // Wed Nov 12 00:00:00 MST 2014
+		finalDayIndex.add(76967953);    // Thu Nov 13 00:00:00 MST 2014
+		finalDayIndex.add(77594228);    // Fri Nov 14 00:00:00 MST 2014
+		finalDayIndex.add(78231819);    // Mon Nov 17 00:00:00 MST 2014
+		finalDayIndex.add(78868508);    // Tue Nov 18 00:00:00 MST 2014
+		finalDayIndex.add(79517251);    // Wed Nov 19 00:00:00 MST 2014
+		finalDayIndex.add(80160090);    // Thu Nov 20 00:00:00 MST 2014
+		finalDayIndex.add(80808177);    // Fri Nov 21 00:00:00 MST 2014
+		finalDayIndex.add(81445112);    // Mon Nov 24 00:00:00 MST 2014
+		finalDayIndex.add(82084507);    // Tue Nov 25 00:00:00 MST 2014
+		finalDayIndex.add(82724353);    // Wed Nov 26 00:00:00 MST 2014
+		
+		/*
+		finalDayIndex.add(83359033);    // Tue Dec 02 00:00:00 MST 2014
+		finalDayIndex.add(83995968);    // Wed Dec 03 00:00:00 MST 2014
+		finalDayIndex.add(84634051);    // Thu Dec 04 00:00:00 MST 2014
+		finalDayIndex.add(85268034);    // Fri Dec 05 00:00:00 MST 2014
+		finalDayIndex.add(85907017);    // Mon Dec 08 00:00:00 MST 2014
+		finalDayIndex.add(86547316);    // Tue Dec 09 00:00:00 MST 2014
+		finalDayIndex.add(87179823);    // Wed Dec 10 00:00:00 MST 2014
+		finalDayIndex.add(87812248);    // Thu Dec 11 00:00:00 MST 2014
+		finalDayIndex.add(88452673);    // Fri Dec 12 00:00:00 MST 2014
+		finalDayIndex.add(89088098);    // Mon Dec 15 00:00:00 MST 2014
+		finalDayIndex.add(89714197);    // Tue Dec 16 00:00:00 MST 2014
+		finalDayIndex.add(90356708);    // Wed Dec 17 00:00:00 MST 2014
+		finalDayIndex.add(90994996);    // Thu Dec 18 00:00:00 MST 2014
+		finalDayIndex.add(91621927);    // Fri Dec 19 00:00:00 MST 2014
+		*/
+		
 		
         if (length <= 0) {
             log.info(" Broker is missing in command line. Brokers supported is TM");
@@ -107,6 +172,12 @@ public class MainSimulation {
 			   Strategy strategy = new TrendStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
 						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
 			   stock.setStrategy(strategy);
+			   
+		   } else if ( stock.getStrategyID() == 3) {
+				Strategy strategy = new MeanReversionStrategyNeq2(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+				stock.setStrategy(strategy);
+		   
 		   } else {
 			   log.info("Stategy ID not supported, assigning manual as default");
 			   Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
@@ -152,11 +223,18 @@ public class MainSimulation {
 						}
 						continue;
 					}
-					
-					log.info(newQuote.getSymbol());
-					//epService.getEPRuntime().sendEvent(newQuote);
-					//check portfolio value every 1000 symbols approx 20 seconds
-					
+					if (newQuote != null) {
+						 // send quote to strategy							
+						for (Stock stock : listOfStocks) {
+							if (stock.getSymbol().contentEquals(newQuote.getSymbol())) {
+								stock.getStrategy().stateTransition(newQuote);
+								break;
+							}
+						}
+						
+				    } else {
+						log.error("Quotes returned from Market Data Provider is a null String Array");
+					}					
 			    }	
 			    account.analyzeTrades();
 				allTrades.put(tradeDay, account.getStockPosition());
