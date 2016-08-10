@@ -22,7 +22,7 @@ import org.apache.log4j.Logger;
 import com.TraderLight.DayTrader.AccountMgmt.AccountMgr;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
-import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy.States;
+
 
 /**
  *  This class implements a men reversion strategy doubling down . 

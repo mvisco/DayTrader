@@ -149,5 +149,6 @@ public class Level1Quote {
     public double getHigh52week() {return high52week;}
     public Date getLastDateTime() {return lastDateTime;}
     public Date getCurrentDateTime() {return currentDateTime;}
+    public int getId() { return id; }
 
 }

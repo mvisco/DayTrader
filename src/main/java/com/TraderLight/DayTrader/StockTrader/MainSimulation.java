@@ -1,8 +1,12 @@
 package com.TraderLight.DayTrader.StockTrader;
 
 import java.sql.Connection;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,84 +47,100 @@ public class MainSimulation {
 		int closeOpeningIndex;
 		int length = args.length;
 		
-		
-		initialDayIndex.add(71885709);    // Mon Nov 03 00:00:00 MST 2014
-		initialDayIndex.add(72526956);    // Wed Nov 05 00:00:00 MST 2014
-		initialDayIndex.add(73164096);    // Thu Nov 06 00:00:00 MST 2014
-		initialDayIndex.add(73801605);    // Fri Nov 07 00:00:00 MST 2014
-		initialDayIndex.add(74432114);    // Mon Nov 10 00:00:00 MST 2014
-		initialDayIndex.add(75072318);    // Tue Nov 11 00:00:00 MST 2014
-		initialDayIndex.add(75698675);    // Wed Nov 12 00:00:00 MST 2014
-		initialDayIndex.add(76329501);    // Thu Nov 13 00:00:00 MST 2014
-		initialDayIndex.add(76967953);    // Fri Nov 14 00:00:00 MST 2014
-		initialDayIndex.add(77594228);    // Mon Nov 17 00:00:00 MST 2014
-		initialDayIndex.add(78231819);    // Tue Nov 18 00:00:00 MST 2014
-		initialDayIndex.add(78868508);    // Wed Nov 19 00:00:00 MST 2014
-		initialDayIndex.add(79517251);    // Thu Nov 20 00:00:00 MST 2014
-		initialDayIndex.add(80160090);    // Fri Nov 21 00:00:00 MST 2014
-		initialDayIndex.add(80808177);    // Mon Nov 24 00:00:00 MST 2014
-		initialDayIndex.add(81445112);    // Tue Nov 25 00:00:00 MST 2014
-		initialDayIndex.add(82084507);    // Wed Nov 26 00:00:00 MST 2014
-		
-		/*		
-		initialDayIndex.add(82724353);    // Tue Dec 02 00:00:00 MST 2014
-		initialDayIndex.add(83359033);    // Wed Dec 03 00:00:00 MST 2014
-		initialDayIndex.add(83995968);    // Thu Dec 04 00:00:00 MST 2014
-		initialDayIndex.add(84634051);    // Fri Dec 05 00:00:00 MST 2014
-		initialDayIndex.add(85268034);    // Mon Dec 08 00:00:00 MST 2014
-		initialDayIndex.add(85907017);    // Tue Dec 09 00:00:00 MST 2014
-		initialDayIndex.add(86547316);    // Wed Dec 10 00:00:00 MST 2014
-		initialDayIndex.add(87179823);    // Thu Dec 11 00:00:00 MST 2014
-		initialDayIndex.add(87812248);    // Fri Dec 12 00:00:00 MST 2014
-		initialDayIndex.add(88452673);    // Mon Dec 15 00:00:00 MST 2014
-		initialDayIndex.add(89088098);    // Tue Dec 16 00:00:00 MST 2014
-		initialDayIndex.add(89714197);    // Wed Dec 17 00:00:00 MST 2014
-		initialDayIndex.add(90356708);    // Thu Dec 18 00:00:00 MST 2014
-		initialDayIndex.add(90994996);    // Fri Dec 19 00:00:00 MST 2014
-		*/
-		
-		finalDayIndex.add(72526956);    // Mon Nov 03 00:00:00 MST 2014
-		finalDayIndex.add(73164096);    // Wed Nov 05 00:00:00 MST 2014
-		finalDayIndex.add(73801605);    // Thu Nov 06 00:00:00 MST 2014
-		finalDayIndex.add(74432114);    // Fri Nov 07 00:00:00 MST 2014
-		finalDayIndex.add(75072318);    // Mon Nov 10 00:00:00 MST 2014
-		finalDayIndex.add(75698675);    // Tue Nov 11 00:00:00 MST 2014
-		finalDayIndex.add(76329501);    // Wed Nov 12 00:00:00 MST 2014
-		finalDayIndex.add(76967953);    // Thu Nov 13 00:00:00 MST 2014
-		finalDayIndex.add(77594228);    // Fri Nov 14 00:00:00 MST 2014
-		finalDayIndex.add(78231819);    // Mon Nov 17 00:00:00 MST 2014
-		finalDayIndex.add(78868508);    // Tue Nov 18 00:00:00 MST 2014
-		finalDayIndex.add(79517251);    // Wed Nov 19 00:00:00 MST 2014
-		finalDayIndex.add(80160090);    // Thu Nov 20 00:00:00 MST 2014
-		finalDayIndex.add(80808177);    // Fri Nov 21 00:00:00 MST 2014
-		finalDayIndex.add(81445112);    // Mon Nov 24 00:00:00 MST 2014
-		finalDayIndex.add(82084507);    // Tue Nov 25 00:00:00 MST 2014
-		finalDayIndex.add(82724353);    // Wed Nov 26 00:00:00 MST 2014
-		
-		/*
-		finalDayIndex.add(83359033);    // Tue Dec 02 00:00:00 MST 2014
-		finalDayIndex.add(83995968);    // Wed Dec 03 00:00:00 MST 2014
-		finalDayIndex.add(84634051);    // Thu Dec 04 00:00:00 MST 2014
-		finalDayIndex.add(85268034);    // Fri Dec 05 00:00:00 MST 2014
-		finalDayIndex.add(85907017);    // Mon Dec 08 00:00:00 MST 2014
-		finalDayIndex.add(86547316);    // Tue Dec 09 00:00:00 MST 2014
-		finalDayIndex.add(87179823);    // Wed Dec 10 00:00:00 MST 2014
-		finalDayIndex.add(87812248);    // Thu Dec 11 00:00:00 MST 2014
-		finalDayIndex.add(88452673);    // Fri Dec 12 00:00:00 MST 2014
-		finalDayIndex.add(89088098);    // Mon Dec 15 00:00:00 MST 2014
-		finalDayIndex.add(89714197);    // Tue Dec 16 00:00:00 MST 2014
-		finalDayIndex.add(90356708);    // Wed Dec 17 00:00:00 MST 2014
-		finalDayIndex.add(90994996);    // Thu Dec 18 00:00:00 MST 2014
-		finalDayIndex.add(91621927);    // Fri Dec 19 00:00:00 MST 2014
-		*/
-		
-		
-        if (length <= 0) {
+		if (length <= 0) {
+			//we need broker in simulation to assess trading costs
             log.info(" Broker is missing in command line. Brokers supported is TM");
             log.info("Quitting.....");
             System.exit(0);
         }
-        
+		
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
+		String initialDate = "2016-03-05";
+		String finalDate = "2016-03-07";
+		Date iDate=null;
+		try {
+			iDate = sdf.parse(initialDate);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Date fDate=null;
+		try {
+			fDate = sdf.parse(finalDate);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// determine the db to connect to. Assume right now that both initial date and final date belong to the same DB eventually this needs to be changed.
+		String db= getDB(initialDate);
+		
+		// get list of dates  to run simulation on 
+		List<Date> dates = getDaysBetweenDates(iDate, fDate);
+		String[] tempDate;	
+		
+		// set the time to add to query DB on
+		String initialTimeMorning = "07:29:55";
+		String finalTimeMorning = "07:30:00";
+		String initialTimeAfternoon = "13:59:54";
+		String finalTimeAfternoon = "13:59:59";
+		
+		//clone the dates list to be able to do remove....
+		List<Date> tempDates = new ArrayList<Date>(dates);
+		
+		GetFromStorageJDBC getRecord = new GetFromStorageJDBC();		
+		// get connection
+		Connection con = getRecord.establishConnection(db); 
+		if (con == null) {
+			System.out.println("connection error" + " " +db);
+			return;
+		}
+		
+		//get indexes
+		for (Date date : tempDates) {
+			// date.toString() looks like this "Fri Aug 05 00:00:00 MDT 2016"
+			tempDate = date.toString().split(" ");
+			// remove holidays.... It will need to be changed to also remove holidays that fall in the week ex. 4th of July etc...
+			if (tempDate[0].contentEquals("Sat") || tempDate[0].contentEquals("Sun")) {
+				dates.remove(date);
+				continue;
+			}
+			
+			// create the DB query arguments
+			String query1 = tempDate[5]+"-"+monthToNumber(tempDate[1])+"-"+tempDate[2]+" "+ initialTimeMorning;
+			String query2 = tempDate[5]+"-"+monthToNumber(tempDate[1])+"-"+tempDate[2]+" "+ finalTimeMorning;
+			String query3 = tempDate[5]+"-"+monthToNumber(tempDate[1])+"-"+tempDate[2]+" "+ initialTimeAfternoon;
+			String query4 = tempDate[5]+"-"+monthToNumber(tempDate[1])+"-"+tempDate[2]+" "+ finalTimeAfternoon;
+
+					
+			Level1Quote newQuote = new Level1Quote();
+			//newQuote = getRecord.getLevel1Quote(con, newQuote, "GOOGL", date, date1);
+			newQuote = getRecord.getLevel1Quote(con, newQuote, "GOOGL", query1, query2);
+			
+			if (newQuote.getId() == 0) {
+				// no data for the day
+				log.info("No initial data for the day " + date);
+				continue;
+			}
+			initialDayIndex.add(newQuote.getId());
+			System.out.println(newQuote.getId());
+			newQuote = getRecord.getLevel1Quote(con, newQuote, "GOOGL", query3, query4);
+			if (newQuote.getId() == 0) {
+				// no final data for the day, I guess remove the data from initial index as well and continue to next day
+				log.info("No final data for the day " + date);
+				initialDayIndex.remove(initialDayIndex.size()-1);
+				continue;
+			}
+			finalDayIndex.add(newQuote.getId());
+			
+			
+		}
+		
+        if (initialDayIndex.size() == 0) {
+        	log.info("There are no days to run the simulation on............................");
+        	System.exit(0);
+        }
         SystemConfig.populateSystemConfig("config.properties");
         SystemConfig sysconfig = SystemConfig.getSystemConfig();
         
@@ -189,14 +209,9 @@ public class MainSimulation {
 		}
 		
         Date getDate1= null;
-		GetFromStorageJDBC getRecord = new GetFromStorageJDBC();		
-		// get connection
-		Connection con = getRecord.establishConnection(); 
-		if (con == null) {
-			log.error("Cannot create a connection to the DB");
-			return;
-		}
+		
 		int n;
+		Level1Quote newQuote = new Level1Quote();
 		 for (int j =0; j < initialDayIndex.size(); j++ )  { 
 			  
 			    morningOpenIndex = initialDayIndex.get(j);
@@ -208,7 +223,7 @@ public class MainSimulation {
 					
 					
 					// Use jdbc driver
-					Level1Quote newQuote = new Level1Quote();
+					//Level1Quote newQuote = new Level1Quote();
 					newQuote = getRecord.getLevel1Quote(i, con, newQuote);	
 					
 					if (i >= (closeOpeningIndex - 1500)) {
@@ -223,9 +238,16 @@ public class MainSimulation {
 						}
 						continue;
 					}
-					if (newQuote != null) {
+					if ( (newQuote == null) ) {
+						continue;
+					}
+					
+					if ( (newQuote != null) && (!newQuote.getSymbol().contentEquals("")) ){
 						 // send quote to strategy							
 						for (Stock stock : listOfStocks) {
+							log.info(stock.getSymbol());
+							log.info(newQuote.getSymbol());
+							log.info(newQuote.getCurrentDateTime());
 							if (stock.getSymbol().contentEquals(newQuote.getSymbol())) {
 								stock.getStrategy().stateTransition(newQuote);
 								break;
@@ -327,6 +349,89 @@ public class MainSimulation {
 		log.info(" " );
 		
 				
+	}
+	
+	public static String getDB(String initialDate) {
+		String db = "";
+		int month;
+		
+		String[] idateArray = initialDate.split("-");
+		
+		if (idateArray[0].contentEquals("2016")) {			
+			month = Integer.parseInt(idateArray[1]);
+			if (month <= 4 ) {
+				db = "traderlight2016-1";
+			} else {
+				db = "traderlight2016-2";
+			}
+			
+		} else if (idateArray[0].contentEquals("2015")) {
+			month = Integer.parseInt(idateArray[1]);
+			if (month <= 6 ) {
+				db = "traderlight2015";
+			} else {
+				db = "traderlight2015-2";
+			}
+		
+		} else {
+			db = "traderlight2014";
+		}	
+		return db;
+	}
+	
+	
+	public static List<Date> getDaysBetweenDates(Date startdate, Date enddate)
+	{
+	    List<Date> dates = new ArrayList<Date>();
+	    Calendar calendar = new GregorianCalendar();
+	    calendar.setTime(startdate);
+	    
+	    Calendar endCalendar = new GregorianCalendar();
+	    endCalendar.setTime(enddate);
+	    endCalendar.add(Calendar.DATE, 1);
+	    enddate=endCalendar.getTime();
+
+	    while (calendar.getTime().before(enddate))
+	    {
+	        Date result = calendar.getTime();
+	        dates.add(result);
+	        calendar.add(Calendar.DATE, 1);
+	    }
+	    return dates;
+	}
+	
+	public static String monthToNumber(String month) {
+		String monthNumber="";
+		
+		if (month.contentEquals("Jan")) {
+			monthNumber = "01";
+		} else if ((month.contentEquals("Feb"))){
+			monthNumber = "02";
+		} else if ((month.contentEquals("Mar"))){
+			monthNumber = "03";
+		} else if ((month.contentEquals("Apr"))){
+			monthNumber = "04";
+		} else if ((month.contentEquals("May"))){
+			monthNumber = "05";
+		} else if ((month.contentEquals("Jun"))){
+			monthNumber = "06";
+		} else if ((month.contentEquals("Jul"))){
+			monthNumber = "07";
+		} else if ((month.contentEquals("Aug"))){
+			monthNumber = "08";
+		} else if ((month.contentEquals("Sep"))){
+			monthNumber = "09";
+		} else if ((month.contentEquals("Oct"))){
+			monthNumber = "10";
+		} else if ((month.contentEquals("Nov"))){
+			monthNumber = "11";
+		}  else if ((month.contentEquals("Dec"))){
+			monthNumber = "12";
+		} else {
+			return month;
+		}
+				
+		return monthNumber;
 	}
 
 }

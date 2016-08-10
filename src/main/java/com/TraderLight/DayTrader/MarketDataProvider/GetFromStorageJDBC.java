@@ -5,9 +5,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Date;
 import org.apache.log4j.Logger;
 import com.TraderLight.DayTrader.StockTrader.Logging;
+
 
 
 public class GetFromStorageJDBC {
@@ -29,12 +29,13 @@ public class GetFromStorageJDBC {
 		}
 	}
 	
-	public Connection establishConnection() {
+	public Connection establishConnection(String db) {
 		
 		// Only establish  connection if connection not already established
 		if (this.con == null ) {		
 			// String url = "jdbc:mysql://192.168.1.108/traderlight2016-1";			 
-			 String url = "jdbc:mysql://localhost/traderlight2014";
+			// String url = "jdbc:mysql://localhost/traderlight2014";
+			String url = "jdbc:mysql://localhost/" + db;
 				try {
 					this.con = DriverManager.getConnection(url,"root", "password");
 					this.stmt = con.createStatement();
@@ -106,7 +107,7 @@ public class GetFromStorageJDBC {
 		GetFromStorageJDBC getRecord = new GetFromStorageJDBC();
 		
 		// get connection
-		Connection con = getRecord.establishConnection();
+		Connection con = getRecord.establishConnection("traderlight");
 		//get record
 			
 		log.info("Getting First  object");
@@ -220,7 +221,7 @@ public class GetFromStorageJDBC {
 
 		}
 	
-	public  Level1Quote getLevel1Quote(Connection dbConnection, Level1Quote quote, String symbol, Date date1, Date date2) {
+	public  Level1Quote getLevel1Quote(Connection dbConnection, Level1Quote quote, String symbol, String date1, String date2) {
 		
 		 //Get a Statement object
 		 try {
