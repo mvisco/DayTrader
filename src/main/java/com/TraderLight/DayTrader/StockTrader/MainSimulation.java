@@ -55,8 +55,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-03-05";
-		String finalDate = "2016-03-07";
+		String initialDate = "2014-03-05";
+		String finalDate = "2014-03-07";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -75,6 +75,7 @@ public class MainSimulation {
 		
 		// determine the db to connect to. Assume right now that both initial date and final date belong to the same DB eventually this needs to be changed.
 		String db= getDB(initialDate);
+		log.info("db is " + db);
 		
 		// get list of dates  to run simulation on 
 		List<Date> dates = getDaysBetweenDates(iDate, fDate);
@@ -116,7 +117,7 @@ public class MainSimulation {
 					
 			Level1Quote newQuote = new Level1Quote();
 			//newQuote = getRecord.getLevel1Quote(con, newQuote, "GOOGL", date, date1);
-			newQuote = getRecord.getLevel1Quote(con, newQuote, "GOOGL", query1, query2);
+			newQuote = getRecord.getLevel1Quote(con, newQuote, "AAPL", query1, query2);
 			
 			if (newQuote.getId() == 0) {
 				// no data for the day
@@ -125,7 +126,7 @@ public class MainSimulation {
 			}
 			initialDayIndex.add(newQuote.getId());
 			System.out.println(newQuote.getId());
-			newQuote = getRecord.getLevel1Quote(con, newQuote, "GOOGL", query3, query4);
+			newQuote = getRecord.getLevel1Quote(con, newQuote, "AAPL", query3, query4);
 			if (newQuote.getId() == 0) {
 				// no final data for the day, I guess remove the data from initial index as well and continue to next day
 				log.info("No final data for the day " + date);
@@ -208,56 +209,43 @@ public class MainSimulation {
 			symbols += stock.getSymbol()+",";
 		}
 		
-        Date getDate1= null;
-		
-		int n;
 		Level1Quote newQuote = new Level1Quote();
-		 for (int j =0; j < initialDayIndex.size(); j++ )  { 
+		Map<String,Stock> mapOfStocks = new HashMap<String, Stock>(Stock.listToMap(Stock.getListOfStocks()));
+		
+		for (int j =0; j < initialDayIndex.size(); j++ )  {
 			  
 			    morningOpenIndex = initialDayIndex.get(j);
 			    closeOpeningIndex = finalDayIndex.get(j);
 			    String tradeDay= "Day"+(j+1);
-			    n=1;
 			    		    
 			    for (int i = morningOpenIndex;i < closeOpeningIndex  ;i++ ) {
-					
-					
+										
 					// Use jdbc driver
 					//Level1Quote newQuote = new Level1Quote();
 					newQuote = getRecord.getLevel1Quote(i, con, newQuote);	
 					
 					if (i >= (closeOpeningIndex - 1500)) {
 						// Close all positions we are in the last 20 quotes
-						for (Stock stock : listOfStocks) {
-							String symbol = newQuote.getSymbol();
-							if (stock.getSymbol().contentEquals(symbol)) {
-								stock.strategy.closePositions(newQuote);
-								getDate1 =  newQuote.getCurrentDateTime();
-								break;
-							}
+						if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
+							continue;
+						}
+						if (mapOfStocks.containsKey(newQuote.getSymbol())) {
+							mapOfStocks.get(newQuote.getSymbol()).getStrategy().closePositions(newQuote);
+							
 						}
 						continue;
 					}
-					if ( (newQuote == null) ) {
+					if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
 						continue;
 					}
-					
-					if ( (newQuote != null) && (!newQuote.getSymbol().contentEquals("")) ){
-						 // send quote to strategy							
-						for (Stock stock : listOfStocks) {
-							log.info(stock.getSymbol());
-							log.info(newQuote.getSymbol());
-							log.info(newQuote.getCurrentDateTime());
-							if (stock.getSymbol().contentEquals(newQuote.getSymbol())) {
-								stock.getStrategy().stateTransition(newQuote);
-								break;
-							}
-						}
+										
+				    // send quote to strategy
+					if (mapOfStocks.containsKey(newQuote.getSymbol())) {
+						mapOfStocks.get(newQuote.getSymbol()).getStrategy().stateTransition(newQuote);
 						
-				    } else {
-						log.error("Quotes returned from Market Data Provider is a null String Array");
-					}					
-			    }	
+					}				    				
+			    }
+			    
 			    account.analyzeTrades();
 				allTrades.put(tradeDay, account.getStockPosition());
 				
@@ -278,9 +266,7 @@ public class MainSimulation {
 					// this is the end so analyze all trades
 					analyzeAllTrades();
 				}
-				n++;
-				
-				
+		
 		 }
 		 getRecord.closeConnection();
 	}

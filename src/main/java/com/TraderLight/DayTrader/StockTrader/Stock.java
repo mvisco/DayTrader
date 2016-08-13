@@ -17,7 +17,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -571,10 +573,20 @@ public class Stock {
 		
 			return;
 		}
-	}
 	
+	
+    public static Map<String,Stock> listToMap(List<Stock>listOfStocks) {
+    	
+    	// we use a map because it is faster in searching given that is O(1) vs O(n) in a list
+    	Map<String, Stock> mapOfStocks = new HashMap<String, Stock>();
+    	
+    	for (Stock stock : listOfStocks) {    		
+    		mapOfStocks.put(stock.getSymbol(), stock);    		
+    	}
+    	return mapOfStocks;
+    }
 
-	
+}
 	
 	
 
