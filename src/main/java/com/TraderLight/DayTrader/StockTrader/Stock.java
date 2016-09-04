@@ -585,6 +585,11 @@ public class Stock {
     	}
     	return mapOfStocks;
     }
+    
+    public void updateLot(int lot_size) {
+        this.strategy.updateLot(lot_size);
+
+    }
 
 }
 	

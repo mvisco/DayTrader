@@ -63,6 +63,10 @@ public abstract class  Strategy {
 		
 	}
 	
+	public void updateLot(int lotSize) {
+		this.lot=lotSize;
+	}
+	
 	public double calculateMean(Level1Quote newQuote, Level1Quote prevQuote) {
 		
 		// we do not want to add to sample space quotes that do not have difference in volumes. The reason is that 
@@ -171,4 +175,9 @@ public abstract class  Strategy {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	public void updateChangeProfitLoss(double change, double profit, double loss) {
+		return;
+	}
+	
 }

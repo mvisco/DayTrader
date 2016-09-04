@@ -314,6 +314,7 @@ public class AccountMgr {
 		positions = new ArrayList<StockPosition>();	
 		historyPositions = new ArrayList<StockPosition>();
 		currentTradeCost=0D;
+		cash=0D;
 		
 		
 	}

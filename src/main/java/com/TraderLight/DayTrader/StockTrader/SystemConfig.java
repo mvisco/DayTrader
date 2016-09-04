@@ -33,6 +33,9 @@ public class SystemConfig {
 	String OHSourceApp;
 	boolean mock;
 	String qtURL;
+	int capital;
+	boolean useImpVol;
+	boolean overwriteLotSize;
 	private static SystemConfig sysConfig = null;
 	public static final Logger log = Logging.getLogger(true);
 	
@@ -74,7 +77,18 @@ public class SystemConfig {
 					sysConfig.mock=false;
 				}
 				sysConfig.qtURL = properties.getProperty("qtURL");
-				
+				sysConfig.capital=Integer.parseInt(properties.getProperty("capital"));
+				if (properties.getProperty("useImpVol").contains("true")) {
+					sysConfig.useImpVol=true;
+				} else {
+					sysConfig.useImpVol=false;
+				}
+				if (properties.getProperty("overwriteLotSize").contains("true")) {
+					sysConfig.overwriteLotSize=true;
+				} else {
+					sysConfig.overwriteLotSize=false;
+				}
+								
 			} catch (IOException e){
 				log.info("Something went wrong in reading the config file " + e);
 				log.info("Exiting program........");

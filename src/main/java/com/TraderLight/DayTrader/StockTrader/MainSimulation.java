@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.log4j.Logger;
 
 import com.TraderLight.DayTrader.AccountMgmt.AccountMgr;
@@ -35,6 +36,8 @@ public class MainSimulation {
 	public static double capital_allocated;
 	public static int spreadTrading = 0;  // Default value is that we do not trade spread
 	public static Map<String,List<StockPosition>> allTrades=new HashMap<String,List<StockPosition>>();
+	public static int capital_available;
+	public static Map<Date, Double> stats_trade = new HashMap<Date,Double>();
 	
 	
 
@@ -55,8 +58,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2014-03-05";
-		String finalDate = "2014-03-07";
+		String initialDate = "2016-01-08";
+		String finalDate = "2016-02-28";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -145,6 +148,9 @@ public class MainSimulation {
         SystemConfig.populateSystemConfig("config.properties");
         SystemConfig sysconfig = SystemConfig.getSystemConfig();
         
+        capital_available=sysconfig.capital;
+        maxNumberOfPositions=sysconfig.maxNumberOfPositions;
+        
         Stock.populateStock("stock.xml");
         List<Stock> listOfStocks = Stock.getListOfStocks();
 				
@@ -177,7 +183,6 @@ public class MainSimulation {
 				stock.setVolumeVector(defaultVolume);
 			}
 			// Instantiate strategy
-			// Right now we are using the same strategy for all symbols, it may be better to have the choice of strategy for each symbol
 			
 			if (stock.getStrategyID() == 0) {
 				Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
@@ -208,6 +213,29 @@ public class MainSimulation {
 		   }
 			symbols += stock.getSymbol()+",";
 		}
+		
+		//capital_available = 4*sysconfig.capital;
+		//overwrite lot size based on capital available and max positions
+		double single_stock_capital = (double)4*capital_available/(double) sysconfig.maxNumberOfPositions;
+		log.info("single stock capital is " + single_stock_capital);;
+		
+		 for (Stock stock : listOfStocks ) {
+
+             String symb = stock.getSymbol();
+             if (stock.getTradeable()) {
+
+                     // Get a quote to have a market price of the stock
+                     Level1Quote quote = new Level1Quote();
+                     int i = initialDayIndex.get(0) + 10000;
+                     quote = getRecord.getLevel1Quote(i,con,quote,symb,100);
+                     double price_bid = quote.getBid();
+                     log.info("price is " + price_bid);
+                     int lot_size = (int) (single_stock_capital/(2.0*price_bid));
+                     log.info("symb is " + symb + " lot size is " + lot_size);
+                     // update lot_size in the strategy
+                     stock.updateLot(lot_size);
+             }
+         }
 		
 		Level1Quote newQuote = new Level1Quote();
 		Map<String,Stock> mapOfStocks = new HashMap<String, Stock>(Stock.listToMap(Stock.getListOfStocks()));
@@ -248,6 +276,7 @@ public class MainSimulation {
 			    
 			    account.analyzeTrades();
 				allTrades.put(tradeDay, account.getStockPosition());
+				createTradingStats(newQuote.getCurrentDateTime(),account.getStockPosition());
 				
 				
 				totalTradeCost+=account.getTradeCost();
@@ -255,12 +284,32 @@ public class MainSimulation {
 				
 				//moveStrategiesToInitialState();
 				
-				log.info(" Done with the day");
+				log.info(" Done with the day " + newQuote.getCurrentDateTime());
 				
 				for (Stock stock : listOfStocks) {
 					stock.strategy.setStateToS0();
 					stock.strategy.clearMean();
 				}
+				
+				/*
+				
+				// recalculate change profit and loss for next day
+				tempDate = newQuote.getCurrentDateTime().toString().split(" ");
+				// temp[0] should contain the day
+				String query1 = tempDate[0]+ " " + initialTimeAfternoon;
+				String query2 = tempDate[0]+ " " + finalTimeAfternoon;
+				for (Stock s : listOfStocks) {
+					
+					//newQuote = getRecord.getLevel1Quote(con, newQuote, "GOOGL", date, date1);
+					newQuote = getRecord.getLevel1Quote(con, newQuote, s.getSymbol(), query1, query2);
+					double high = newQuote.getHigh();
+					double low = newQuote.getLow();
+					double change = (high-low)/2.0;
+					// update strategy with the new values
+					s.strategy.updateChangeProfitLoss(change, change/2.0, change);					
+				}
+				*/
+				
 
 				if (j == initialDayIndex.size() - 1) {
 					// this is the end so analyze all trades
@@ -326,14 +375,14 @@ public class MainSimulation {
 		log.info("Total Gain is: " + totalGain);
 		log.info("Trade Cost is : " + totalTradeCost);
 		log.info("Gain minus trade cost is: " + (totalGain - totalTradeCost) );
-		log.info("Return on capital " + (totalGain-totalTradeCost)/(capital_allocated/4.0));
-		log.info("Capital allocated " + (capital_allocated/4.0) + " Max number of positions " + maxNumberOfPositions );
+		log.info("Return on capital " + (totalGain-totalTradeCost)/(double)capital_available);
+		log.info("Capital allocated " + (capital_available) + " Max number of positions " + maxNumberOfPositions );
 		log.info("Total for the simulation run *****************************END ");
 		log.info("Total for the simulation run *****************************END ");
 		log.info("Total for the simulation run *****************************END ");
 		log.info(" " );
 		log.info(" " );
-		
+		analyze_trading_stats();
 				
 	}
 	
@@ -419,7 +468,53 @@ public class MainSimulation {
 				
 		return monthNumber;
 	}
+	
+    public static void createTradingStats(Date date, List<StockPosition> a) {
 
+        double gain = 0.0;
+
+        for (StockPosition s : a) {
+        	// not considering trading cost right now
+                gain = gain + s.getGain();
+        }
+
+        stats_trade.put(date, gain);
+
+}
+
+public static void analyze_trading_stats() {
+
+       // double max_loss = Double.MAX_VALUE;
+      //  double max_gain = Double.MIN_VALUE;
+        double sharpe_ratio=0;
+      //  Date loss_date = null;
+      //  Date gain_date = null;
+        DescriptiveStatistics m = new DescriptiveStatistics();
+        DescriptiveStatistics min_max = new DescriptiveStatistics();
+
+
+        for ( Entry<Date,Double> a : stats_trade.entrySet()) {
+
+                log.info("Date is " + a.getKey() + " Gain for the day is " + a.getValue());
+                
+               
+                double allocated_capital = capital_available;
+                m.addValue(a.getValue()/allocated_capital);
+                min_max.addValue(a.getValue());
+                
+
+        }
+        sharpe_ratio = m.getMean()/m.getStandardDeviation();
+
+        log.info("Mean of the returns " + m.getMean());
+        log.info("Std Dev of the return " + m.getStandardDeviation());
+        log.info(" Maximum Day Loss " + min_max.getMin());
+        log.info("Maximum Day Gain " + min_max.getMax());
+        log.info("Sharpe ratio is " + sharpe_ratio);
+
+
+   }
+    
 }
 
     
