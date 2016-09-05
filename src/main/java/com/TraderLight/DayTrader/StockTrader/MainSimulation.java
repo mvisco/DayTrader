@@ -58,8 +58,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-01-08";
-		String finalDate = "2016-02-28";
+		String initialDate = "2016-05-01";
+		String finalDate = "2016-08-31";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
