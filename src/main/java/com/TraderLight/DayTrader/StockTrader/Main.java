@@ -248,7 +248,7 @@ public class Main {
 							log.error("got exception from  sleep when waiting for orders to close");
 							e.printStackTrace();
 						}					
-					account.analyzeTrades();
+					account.analyzeTrades(true);
 					break;
 				}
 				

@@ -45,6 +45,7 @@ public abstract class  Strategy {
 	int sizeOfTheList;
 	Level1Quote lastQuote;
 	int minute_mean_position = 0;
+	boolean display=true;
 	
 	public Strategy(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
 			double profit, List<Integer> v) {
@@ -178,6 +179,10 @@ public abstract class  Strategy {
 	
 	public void updateChangeProfitLoss(double change, double profit, double loss) {
 		return;
+	}
+	
+	public void updateDisplay(Boolean display) {
+		this.display=display;
 	}
 	
 }

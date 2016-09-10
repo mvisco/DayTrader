@@ -5,6 +5,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
@@ -270,5 +273,60 @@ public class GetFromStorageJDBC {
 
 		}
 	
+	public  List<Level1Quote> getLevel1QuoteList(Connection dbConnection, String symbol, int index1, int index2) {
+		
+		 
+		List<Level1Quote> l = new ArrayList<Level1Quote>();
+		//Get a Statement object
+		 try {
+			//log.info("Executing query");
+			 String query;
+			 if (symbol.contentEquals("ALL")) {
+				  query = "SELECT * from levelonequote where id BETWEEN '" + index1 + "' AND '" + index2 +  "'";
+			 } else {
+			      query = "SELECT * from levelonequote where id BETWEEN '" + index1 + "' AND '" + index2 + "' and symbol ='" + symbol + "'";
+		     }
+			// log.info("query is " + query);
+			rs = stmt.executeQuery(query);
+			 while(rs.next()){
+				 Level1Quote quote = new Level1Quote();
+				 quote.symbol = rs.getString("symbol");
+				 quote.last = rs.getDouble("last");
+				 quote.id = rs.getInt("id");
+				 quote.currentDateTime = rs.getTimestamp("current_date_time");
+				 quote.ask = rs.getDouble("ask");
+				 quote.askSize = rs.getInt("ask_size");
+				 quote.avgTrade = rs.getInt("avg_trades");
+				 quote.bid = rs.getDouble("bid");
+				 quote.bidSize = rs.getInt("bid_size");
+				 quote.change = rs.getDouble("change");
+				 quote.high = rs.getDouble("high");
+				 quote.high52week = rs.getDouble("high_52_week");
+				 quote.isin = rs.getString("stock_isin");
+				 quote.lastDateTime = rs.getTimestamp("last_date_time");
+				 quote.lastVolume = rs.getInt("last_volume");
+				 quote.low = rs.getDouble("low");
+				 quote.low52week = rs.getDouble("low_52_week");
+				 quote.numTrades = rs.getInt("num_trades");
+				 quote.open = rs.getDouble("open");
+				 //TODO find the right return value type for tick. We donot really use it so 0 is ok for now
+				 quote.tick = 0;
+				 quote.volume = rs.getInt("vol");	
+				// log.info("Quote is " + quote.id + " " + quote.symbol + " " + quote.currentDateTime + " Last date time " + quote.lastDateTime);
+				 l.add(quote);
+			 }
+			// log.info("Done with the query");
+			
+		   } catch (SQLException e) {
+			     // TODO Auto-generated catch block
+			     e.printStackTrace();
+			     return null;
+		   }
+		 //  log.info("symbol is " + quote.getSymbol());
+		 //  log.info("Volume is " + quote.getVolume());
+		  // log.info("index is  " + index);
+		 
+		return l;
 
+		}
 }

@@ -145,7 +145,7 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 		 
 		deltaVolume = avgVolume/volumePortion;
 		count++;
-		if ( (count % 60) == 0 ) {
+		if ( ((count % 60) == 0 ) && (display)){
 		    log.info(quote.getSymbol() +  " State " + StrategyState);
 		    log.info("Bid : " + Math.round(currentBid*100)/100.0 + " ,Ask : " + Math.round(currentAsk*100)/100.0 +" ; Mean is: " + Math.round(mean*100)/100.0 + " ;difference is " + 
 		         Math.round((currentPrice-mean)*100)/100.0 + " ; objective_change is " + this.objective_change);
@@ -186,8 +186,10 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 		    if ( (currentBid >= (mean + this.objective_change))  
 		    		|| (openShortPositionWithPrice && (currentBid >= shortPositionPrice)) ){
 	
-				log.info("State S0:  attempting to sell one lot of stocks for symbol: " + quote.getSymbol() + " at bid " + currentBid);
-				log.info("Date is " + getDate);
+		    	if (display) {
+				    log.info("State S0:  attempting to sell one lot of stocks for symbol: " + quote.getSymbol() + " at bid " + currentBid);
+				    log.info("Date is " + getDate);
+		    	}
 				this.currentState = States.S0;
 				this.desiredState=States.S1;
 				this.StrategyState=States.STemp;
@@ -199,9 +201,10 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 		    			    	
 		    } else if ( (currentAsk <= (mean - this.objective_change))  
 		    		|| (openLongPositionWithPrice && (currentAsk <= longPositionPrice)) ) {
-		    		
-				log.info("State S0  attempting to buy  one lot of stocks for symbol: " + quote.getSymbol()+ " at ask " + currentAsk);
-				log.info("Date is " + getDate);
+		    	if (display) {	
+				    log.info("State S0  attempting to buy  one lot of stocks for symbol: " + quote.getSymbol()+ " at ask " + currentAsk);
+				    log.info("Date is " + getDate);
+		    	}
 				this.currentState = States.S0;
 				this.desiredState=States.S2;
 				this.StrategyState = States.STemp;
@@ -221,7 +224,9 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 			// close position if we made "profit" or we lost "loss"
 
 				if ( (currentAsk <= this.price-this.profit) ) {
-					log.info("State S1 attempting to close position at profit on symbol" + quote.getSymbol());
+					if (display) {
+					    log.info("State S1 attempting to close position at profit on symbol" + quote.getSymbol());
+					}
 					this.currentState = States.S1;
 				    this.desiredState=States.S0;
 				    this.StrategyState = States.STemp;
@@ -230,9 +235,10 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 				    // We clear the mean at the end of every cycle
 				    clearMean();
 				} else if ((currentAsk >= (this.price+this.objective_change)) ){
-					
-					log.info("State S1:  attempting to sell another lot of stocks for symbol: " + quote.getSymbol() + " at bid " + currentBid);
-					log.info("Date is " + getDate);
+					if (display) {
+					   log.info("State S1:  attempting to sell another lot of stocks for symbol: " + quote.getSymbol() + " at bid " + currentBid);
+					   log.info("Date is " + getDate);
+					}
 					this.currentState = States.S1;
 					this.desiredState=States.S3;
 					this.StrategyState=States.STemp;
@@ -253,7 +259,9 @@ public class MeanReversionStrategyNeq2 extends Strategy{
            
             	
 				if (currentBid >= (this.price+this.profit)) {
-					log.info("State S2 attempting to close position at profit on symbol" + quote.getSymbol());
+					if (display) {
+					    log.info("State S2 attempting to close position at profit on symbol" + quote.getSymbol());
+					}
 					this.currentState = States.S2;
 				    this.desiredState=States.S0;
 				    this.StrategyState = States.STemp;
@@ -263,8 +271,10 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 				    clearMean(); 
 				} else if (currentBid <= (this.price - this.objective_change) ){
 					
-					log.info("State S2  attempting to buy  another lot of stocks for symbol: " + quote.getSymbol()+ " at ask " + currentAsk);
-					log.info("Date is " + getDate);
+					if (display) {
+					    log.info("State S2  attempting to buy  another lot of stocks for symbol: " + quote.getSymbol()+ " at ask " + currentAsk);
+					    log.info("Date is " + getDate);
+					}
 					this.currentState = States.S2;
 					this.desiredState=States.S4;
 					this.StrategyState = States.STemp;
@@ -278,12 +288,14 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 		    
 		case S3:
 			
-			if ( (currentAsk <= this.price-this.profit) //|| (currentAsk >= (this.price+(4)*this.loss))
+			if ( (currentAsk <= this.price-this.profit) || (currentAsk >= (this.price+this.loss))
 					) {	
 				if ( (currentAsk <= this.price-this.profit) ) {
-					log.info("State S3 attempting to close position at profit on symbol" + quote.getSymbol());
+					if (display)
+					    log.info("State S3 attempting to close position at profit on symbol" + quote.getSymbol());
 				} else {
-					//log.info("State S3 attempting to close position at loss on symbol" + quote.getSymbol());
+					if (display)
+					    log.info("State S3 attempting to close position at loss on symbol" + quote.getSymbol());
 				}
 				
 				this.currentState = States.S3;
@@ -300,13 +312,15 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 			
 		case S4:
 			
-			 if ( (currentBid >= (this.price+this.profit)) //|| (currentBid <= (this.price - (4)*this.loss)) 
+			 if ( (currentBid >= (this.price+this.profit)) || (currentBid <= (this.price - this.loss)) 
 					 ){
 	            	
 					if (currentBid >= (this.price+this.profit)) {
-						log.info("State S4 attempting to close position at profit on symbol" + quote.getSymbol());
-					} else {
-						//log.info("State S4 attempting to close position at loss on symbol" + quote.getSymbol());
+						if (display) 
+						     log.info("State S4 attempting to close position at profit on symbol" + quote.getSymbol());
+					} else { 
+						if (display)
+						     log.info("State S4 attempting to close position at loss on symbol" + quote.getSymbol());
 					}
 	            					
 					this.currentState = States.S4;

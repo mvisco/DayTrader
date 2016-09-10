@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 
 import com.TraderLight.DayTrader.AccountMgmt.AccountMgr;
 import com.TraderLight.DayTrader.AccountMgmt.StockPosition;
+import com.TraderLight.DayTrader.GeneticAlgos.GeneticSimulation;
 import com.TraderLight.DayTrader.MarketDataProvider.GetFromStorageJDBC;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
@@ -26,7 +27,7 @@ import com.TraderLight.DayTrader.Strategy.MeanReversionStrategyNeq2;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 import com.TraderLight.DayTrader.Strategy.TrendStrategy;
 
-public class MainSimulation {
+public class MainSimulationAlgo {
 	
 	public static final Logger log = Logging.getLogger(true);
 	public static Level1Quote prevQuote;
@@ -58,8 +59,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-05-01";
-		String finalDate = "2016-08-31";
+		String initialDate = "2014-07-1";
+		String finalDate = "2014-07-31";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -151,7 +152,7 @@ public class MainSimulation {
         capital_available=sysconfig.capital;
         maxNumberOfPositions=sysconfig.maxNumberOfPositions;
         
-        Stock.populateStock("stock.xml");
+        Stock.populateStock("stock-2014-2.xml");
         List<Stock> listOfStocks = Stock.getListOfStocks();
 				
 		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock);
@@ -237,15 +238,52 @@ public class MainSimulation {
              }
          }
 		
-		Level1Quote newQuote = new Level1Quote();
+		
 		Map<String,Stock> mapOfStocks = new HashMap<String, Stock>(Stock.listToMap(Stock.getListOfStocks()));
 		
 		for (int j =0; j < initialDayIndex.size(); j++ )  {
 			  
-			    morningOpenIndex = initialDayIndex.get(j);
-			    closeOpeningIndex = finalDayIndex.get(j);
-			    String tradeDay= "Day"+(j+1);
-			    		    
+	        morningOpenIndex = initialDayIndex.get(j);
+			closeOpeningIndex = finalDayIndex.get(j);
+			 String tradeDay= "Day"+(j+1);
+			 Level1Quote lastQuote = new Level1Quote();
+			 List<Level1Quote> l = new ArrayList<Level1Quote>();
+			 
+			 if (j!=0) { 
+				  				  
+				  l=getRecord.getLevel1QuoteList(con, "ALL", morningOpenIndex, closeOpeningIndex);
+				  
+				  int i =0;			  
+				  
+				  //Iterate on all quotes
+				  for (Level1Quote newQuote : l) {
+				      i++;
+					  if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
+							continue;
+					  }						
+					  if (i >= (l.size() - 50)) {
+					      // Close all positions we are in the last 50 quotes
+						  lastQuote = newQuote;
+						  if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
+						      continue;
+						   }
+						   if (mapOfStocks.containsKey(newQuote.getSymbol()) && (mapOfStocks.get(newQuote.getSymbol()).getTradeable()==true)) {
+								mapOfStocks.get(newQuote.getSymbol()).getStrategy().closePositions(newQuote);
+								
+						   }
+						   continue;
+						}
+						
+						// send quote to strategy
+						if (mapOfStocks.containsKey(newQuote.getSymbol())) {
+							mapOfStocks.get(newQuote.getSymbol()).getStrategy().stateTransition(newQuote);
+										
+						}
+						
+				  }
+			  }
+
+/*
 			    for (int i = morningOpenIndex;i < closeOpeningIndex  ;i++ ) {
 										
 					// Use jdbc driver
@@ -257,7 +295,7 @@ public class MainSimulation {
 						if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
 							continue;
 						}
-						if (mapOfStocks.containsKey(newQuote.getSymbol())) {
+						if (mapOfStocks.containsKey(newQuote.getSymbol()) && (mapOfStocks.get(newQuote.getSymbol()).getTradeable()==true)) {
 							mapOfStocks.get(newQuote.getSymbol()).getStrategy().closePositions(newQuote);
 							
 						}
@@ -273,18 +311,21 @@ public class MainSimulation {
 						
 					}				    				
 			    }
-			    
+			  }  
+*/  
+			 if (j!=0) {	 
 			    account.analyzeTrades(true);
 				allTrades.put(tradeDay, account.getStockPosition());
-				createTradingStats(newQuote.getCurrentDateTime(),account.getStockPosition());
-				
+				createTradingStats(lastQuote.getCurrentDateTime(),account.getStockPosition());
+			 }	
 				
 				totalTradeCost+=account.getTradeCost();
 				account.resetAcctMgr();
 				
 				//moveStrategiesToInitialState();
 				
-				log.info(" Done with the day " + newQuote.getCurrentDateTime());
+				log.info(" Done with the day " + lastQuote.getCurrentDateTime());
+				
 				
 				for (Stock stock : listOfStocks) {
 					stock.strategy.setStateToS0();
@@ -310,12 +351,28 @@ public class MainSimulation {
 				}
 				*/
 				
+				// apply genetic algos for next day
+				if (j != initialDayIndex.size() - 1) {
+				    for (Stock s : listOfStocks) {
+					    if (s.getTradeable()==true) {
+					        GeneticSimulation gSimulation = new GeneticSimulation(s.getSymbol(), account, mapOfStocks, morningOpenIndex, 
+				    		     closeOpeningIndex, getRecord, 
+				    		     listOfStocks, con, s.getChange());
+				            gSimulation.execute();
+					    }
+				    }
+				}
+				for (Stock stock : listOfStocks) {
+					stock.strategy.setStateToS0();
+					stock.strategy.clearMean();
+					stock.strategy.updateDisplay(true);
+				}
 
 				if (j == initialDayIndex.size() - 1) {
 					// this is the end so analyze all trades
 					analyzeAllTrades();
 				}
-		
+		        l.clear();
 		 }
 		 getRecord.closeConnection();
 	}

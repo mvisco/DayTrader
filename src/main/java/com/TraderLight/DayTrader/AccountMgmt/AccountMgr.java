@@ -49,6 +49,7 @@ public class AccountMgr {
 	int max_number_of_positions;
 	private int positionOpen =  0 ; // number of positions open simultaneously
 	boolean mock;
+	double totalGain;
 	
 	
 	public AccountMgr(int maxNumberOfPositions, boolean mock) {
@@ -203,7 +204,7 @@ public class AccountMgr {
   }
 	 
 	
-	public void analyzeTrades() {
+	public void analyzeTrades(boolean display) {
 		
 		StockPosition trade;
 		int numberOfTrades=0;
@@ -219,13 +220,13 @@ public class AccountMgr {
 		double gain;
 		
 		
-		
+	if (display){
 		log.info("-------------------------------");
 		log.info("Analyzing Trades.........");
 		log.info("Analyzing Trades.........");
 		log.info("Analyzing Trades.........");
 		log.info("-------------------------------");
-		
+	}	
 		Iterator<StockPosition> iterator = this.historyPositions.iterator();
 		
 		
@@ -238,8 +239,10 @@ public class AccountMgr {
 				soldPrice=trade.getPriceSold();
 				gain=(soldPrice-priceBought)*(double)trade.getQuantity();				
 				numberOfTrades+=1;
+			if (display) {
 				log.info("These are the parameters of the trade: " + symbol + " " + quantity + " " 
 				         + priceBought + " " + soldPrice + " " + gain);
+			}
 			    if (gain>0) {
 					numberOfWinningTrades = numberOfWinningTrades + 1;
 					currentGain+=gain;
@@ -253,11 +256,13 @@ public class AccountMgr {
 		
 		
 		totalGain = currentGain+currentLoss;
+		this.totalGain = totalGain;
+	if (display){
 		log.info("Number of Total Trades: " + numberOfTrades + " " + " Number of Winning Trades: " + numberOfWinningTrades + 
 				  " Number of Loosing Trades: " + numberofLoosingTrades ) ;
 		log.info("Gain from Trades: " + currentGain + " Loss from Trades: " + currentLoss + " Total Gain/Loss: " + totalGain);
 		log.info("Total Transaction Costs are :" + this.currentTradeCost);	 // totalCost should be the same of currentTadeCost	
-		
+	}	
 	}
 	
 	
@@ -317,6 +322,9 @@ public class AccountMgr {
 		cash=0D;
 		
 		
+	}
+	public double getTotalGain() {
+		return this.totalGain;
 	}
 
 }
