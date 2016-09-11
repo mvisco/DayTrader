@@ -58,8 +58,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-05-01";
-		String finalDate = "2016-08-31";
+		String initialDate = "2014-07-01";
+		String finalDate = "2014-07-31";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -237,7 +237,7 @@ public class MainSimulation {
              }
          }
 		
-		Level1Quote newQuote = new Level1Quote();
+		Level1Quote lastQuote = new Level1Quote();
 		Map<String,Stock> mapOfStocks = new HashMap<String, Stock>(Stock.listToMap(Stock.getListOfStocks()));
 		
 		for (int j =0; j < initialDayIndex.size(); j++ )  {
@@ -245,7 +245,40 @@ public class MainSimulation {
 			    morningOpenIndex = initialDayIndex.get(j);
 			    closeOpeningIndex = finalDayIndex.get(j);
 			    String tradeDay= "Day"+(j+1);
-			    		    
+			    List<Level1Quote> l = new ArrayList<Level1Quote>();
+			    
+			    l=getRecord.getLevel1QuoteList(con, "ALL", morningOpenIndex, closeOpeningIndex);
+				  
+				  int i =0;			  
+				  
+				  //Iterate on all quotes
+				  for (Level1Quote newQuote : l) {
+				      i++;
+					  if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
+							continue;
+					  }						
+					  if (i >= (l.size() - 50)) {
+					      // Close all positions we are in the last 50 quotes
+						  lastQuote = newQuote;
+						  if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
+						      continue;
+						   }
+						   if (mapOfStocks.containsKey(newQuote.getSymbol()) && (mapOfStocks.get(newQuote.getSymbol()).getTradeable()==true)) {
+								mapOfStocks.get(newQuote.getSymbol()).getStrategy().closePositions(newQuote);
+								
+						   }
+						   continue;
+						}
+						
+						// send quote to strategy
+						if (mapOfStocks.containsKey(newQuote.getSymbol())) {
+							mapOfStocks.get(newQuote.getSymbol()).getStrategy().stateTransition(newQuote);
+										
+						}
+						
+				  }
+
+/*
 			    for (int i = morningOpenIndex;i < closeOpeningIndex  ;i++ ) {
 										
 					// Use jdbc driver
@@ -273,10 +306,10 @@ public class MainSimulation {
 						
 					}				    				
 			    }
-			    
+*/			    
 			    account.analyzeTrades(true);
 				allTrades.put(tradeDay, account.getStockPosition());
-				createTradingStats(newQuote.getCurrentDateTime(),account.getStockPosition());
+				createTradingStats(lastQuote.getCurrentDateTime(),account.getStockPosition());
 				
 				
 				totalTradeCost+=account.getTradeCost();
@@ -284,7 +317,7 @@ public class MainSimulation {
 				
 				//moveStrategiesToInitialState();
 				
-				log.info(" Done with the day " + newQuote.getCurrentDateTime());
+				log.info(" Done with the day " + lastQuote.getCurrentDateTime());
 				
 				for (Stock stock : listOfStocks) {
 					stock.strategy.setStateToS0();
