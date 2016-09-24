@@ -58,8 +58,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2014-07-01";
-		String finalDate = "2014-07-31";
+		String initialDate = "2016-09-01";
+		String finalDate = "2016-09-23";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -429,8 +429,10 @@ public class MainSimulation {
 			month = Integer.parseInt(idateArray[1]);
 			if (month <= 4 ) {
 				db = "traderlight2016-1";
-			} else {
+			} else if (month <= 8 ){
 				db = "traderlight2016-2";
+			} else {
+				db = "traderlight2016-3";
 			}
 			
 		} else if (idateArray[0].contentEquals("2015")) {

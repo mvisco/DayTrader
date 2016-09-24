@@ -288,7 +288,7 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 		    
 		case S3:
 			
-			if ( (currentAsk <= this.price-this.profit) || (currentAsk >= (this.price+this.loss))
+			if ( (currentAsk <= this.price-this.profit) //|| (currentAsk >= (this.price+(this.loss)))
 					) {	
 				if ( (currentAsk <= this.price-this.profit) ) {
 					if (display)
@@ -312,7 +312,7 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 			
 		case S4:
 			
-			 if ( (currentBid >= (this.price+this.profit)) || (currentBid <= (this.price - this.loss)) 
+			 if ( (currentBid >= (this.price+this.profit)) //|| (currentBid <= (this.price - (this.loss))) 
 					 ){
 	            	
 					if (currentBid >= (this.price+this.profit)) {
