@@ -11,6 +11,7 @@
 package com.TraderLight.DayTrader.StockTrader;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -18,7 +19,9 @@ import java.util.List;
 import java.util.TimeZone;
 
 import org.apache.log4j.Logger;
+
 import com.TraderLight.DayTrader.AccountMgmt.AccountMgr;
+import com.TraderLight.DayTrader.MarketDataProvider.GetFromStorageJDBC;
 import com.TraderLight.DayTrader.MarketDataProvider.MarketDataProvider;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
@@ -124,6 +127,21 @@ public class Main {
         
 		MarketDataProvider.setParameters(sysconfig.qtURL, symbols);
 		
+		
+		GetFromStorageJDBC getRecord = new GetFromStorageJDBC();
+		Connection con = null;
+		
+		if (sysconfig.useDB) {
+			// create connection to the DB
+			String db = "traderlight2016-3";					
+			// get connection
+			con = getRecord.establishConnection(db); 
+			if (con == null) {
+				System.out.println("db connection error" + " " +db);
+				System.exit(0);
+			}
+		}
+		
 		while (true) {
 			
 			// We are using time zone MST for this so the market opens at 7:30 and closes at 14:00
@@ -208,30 +226,59 @@ public class Main {
 			if ( ((hour > 7) && (hour < 14)) || ((hour == 7) && (min >= 29)) || ((hour == 14) && (min <= 1)) ) {
 				
 				// start getting quotes at 7:29 and end at 14:01
-				quotes = MarketDataProvider.QTMarketDataProvider();
-				if (quotes != null) {
+				if (!sysconfig.useDB) { 
+				    quotes = MarketDataProvider.QTMarketDataProvider();
+				    if (quotes != null) {
 					 // send quote to strategy
-					for (String quote : quotes) {
-						newQuote = new Level1Quote(quote);
-						for (Stock stock : listOfStocks) {
-							if (stock.getSymbol().contentEquals(newQuote.getSymbol())) {
-								stock.getStrategy().stateTransition(newQuote);
-								break;
-							}
-						}
-					}
-			    } else {
+					    for (String quote : quotes) {
+						    newQuote = new Level1Quote(quote);
+						    for (Stock stock : listOfStocks) {
+							    if (stock.getSymbol().contentEquals(newQuote.getSymbol())) {
+								    stock.getStrategy().stateTransition(newQuote);
+								    break;
+							    }
+						    }
+					     }
+			        } else {
 					log.error("Quotes returned from Market Data Provider is a null String Array");
-				}
+				    }
 				
-				try {
+				    try {
 				    // wait 1 sec  before getting the new set of quotes from market data provider
-				    Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					log.error("got exception from  sleep number 1");
-					e.printStackTrace();
+				        Thread.sleep(1000);
+				    } catch (InterruptedException e) {
+					    log.error("got exception from  sleep number 1");
+					    e.printStackTrace();
+				    }
+				} else {
+					// get latest quotes from DB
+					List<Level1Quote> l = new ArrayList<Level1Quote>();
+					
+				    // we are getting the last 50 quotes
+				    l=getRecord.getLevel1QuoteList(con);
+				    
+				    // iterate on all quotes 
+				    for (Level1Quote quote : l) {
+				    	if ( (quote == null) || quote.getSymbol().contentEquals("") ) {
+							continue;
+					    }
+				    	for (Stock stock : listOfStocks) {
+						    if (stock.getSymbol().contentEquals(quote.getSymbol())) {
+							    stock.getStrategy().stateTransition(quote);
+							    break;
+						    }
+					    }
+				    	
+				    }
+				    
+				    try {
+					    // wait 1 sec  before getting the new set of quotes from market data provider
+					        Thread.sleep(1000);
+					    } catch (InterruptedException e) {
+						    log.error("got exception from  sleep number 1");
+						    e.printStackTrace();
+					    }
 				}
-				
 				if ( ((hour==13) && (min>=58)) ) {
 					//close all positions
 					log.info("-------------------------------");

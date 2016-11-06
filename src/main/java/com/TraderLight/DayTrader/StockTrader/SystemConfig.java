@@ -32,6 +32,7 @@ public class SystemConfig {
 	String OHAuthURL;
 	String OHSourceApp;
 	boolean mock;
+	boolean useDB;
 	String qtURL;
 	private static SystemConfig sysConfig = null;
 	public static final Logger log = Logging.getLogger(true);
@@ -74,6 +75,11 @@ public class SystemConfig {
 					sysConfig.mock=false;
 				}
 				sysConfig.qtURL = properties.getProperty("qtURL");
+				if (properties.getProperty("useDB").contains("true")) {
+					sysConfig.useDB=true;
+				} else {
+					sysConfig.useDB=false;
+				}
 				
 			} catch (IOException e){
 				log.info("Something went wrong in reading the config file " + e);
