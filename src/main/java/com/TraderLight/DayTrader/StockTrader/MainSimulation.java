@@ -23,6 +23,7 @@ import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategyNeq2;
+import com.TraderLight.DayTrader.Strategy.NewMeanReversion;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 import com.TraderLight.DayTrader.Strategy.TrendStrategy;
 
@@ -58,8 +59,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-09-01";
-		String finalDate = "2016-09-23";
+		String initialDate = "2016-11-03";
+		String finalDate = "2016-11-04";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -203,6 +204,12 @@ public class MainSimulation {
 				Strategy strategy = new MeanReversionStrategyNeq2(stock.getSymbol(), stock.getLot(), stock.getChange(),
 						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
 				stock.setStrategy(strategy);
+				
+		   } else if ( stock.getStrategyID() == 4) {
+				Strategy strategy = new NewMeanReversion(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+				stock.setStrategy(strategy);	
+		   
 		   
 		   } else {
 			   log.info("Stategy ID not supported, assigning manual as default");
