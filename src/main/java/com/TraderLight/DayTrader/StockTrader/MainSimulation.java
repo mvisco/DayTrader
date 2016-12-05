@@ -17,6 +17,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.log4j.Logger;
 
 import com.TraderLight.DayTrader.AccountMgmt.AccountMgr;
+import com.TraderLight.DayTrader.AccountMgmt.OptionPosition;
 import com.TraderLight.DayTrader.AccountMgmt.StockPosition;
 import com.TraderLight.DayTrader.MarketDataProvider.GetFromStorageJDBC;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
@@ -37,6 +38,7 @@ public class MainSimulation {
 	public static double capital_allocated;
 	public static int spreadTrading = 0;  // Default value is that we do not trade spread
 	public static Map<String,List<StockPosition>> allTrades=new HashMap<String,List<StockPosition>>();
+	public static Map<String, Map<Integer, List<OptionPosition>>> optionAllTrades = new HashMap<String, Map<Integer, List<OptionPosition>>>();
 	public static int capital_available;
 	public static Map<Date, Double> stats_trade = new HashMap<Date,Double>();
 	
@@ -59,8 +61,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-11-03";
-		String finalDate = "2016-11-04";
+		String initialDate = "2016-11-28";
+		String finalDate = "2016-12-02";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -155,7 +157,7 @@ public class MainSimulation {
         Stock.populateStock("stock.xml");
         List<Stock> listOfStocks = Stock.getListOfStocks();
 				
-		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock);
+		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock, true);
 		
         // populate broker and inform AccountMgr
         broker = args[0];
@@ -187,34 +189,34 @@ public class MainSimulation {
 			
 			if (stock.getStrategyID() == 0) {
 				Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-					stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+					stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);				
 				
 			} else if ( stock.getStrategyID() == 1) {
 				Strategy strategy = new MeanReversionStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);
 					
 		   } else if ( stock.getStrategyID() == 2) {
 			   Strategy strategy = new TrendStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 			   stock.setStrategy(strategy);
 			   
 		   } else if ( stock.getStrategyID() == 3) {
 				Strategy strategy = new MeanReversionStrategyNeq2(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);
 				
 		   } else if ( stock.getStrategyID() == 4) {
 				Strategy strategy = new NewMeanReversion(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);	
 		   
 		   
 		   } else {
 			   log.info("Stategy ID not supported, assigning manual as default");
 			   Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 			   stock.setStrategy(strategy);
 			   
 		   }
@@ -223,6 +225,7 @@ public class MainSimulation {
 		
 		//capital_available = 4*sysconfig.capital;
 		//overwrite lot size based on capital available and max positions
+		/*
 		double single_stock_capital = (double)4*capital_available/(double) sysconfig.maxNumberOfPositions;
 		log.info("single stock capital is " + single_stock_capital);;
 		
@@ -243,7 +246,7 @@ public class MainSimulation {
                      stock.updateLot(lot_size);
              }
          }
-		
+		*/
 		Level1Quote lastQuote = new Level1Quote();
 		Map<String,Stock> mapOfStocks = new HashMap<String, Stock>(Stock.listToMap(Stock.getListOfStocks()));
 		
@@ -315,8 +318,12 @@ public class MainSimulation {
 			    }
 */			    
 			    account.analyzeTrades(true);
-				allTrades.put(tradeDay, account.getStockPosition());
-				createTradingStats(lastQuote.getCurrentDateTime(),account.getStockPosition());
+			    if (! account.getTradeOption()) {
+				    allTrades.put(tradeDay, account.getStockPosition());
+				    createTradingStats(lastQuote.getCurrentDateTime(),account.getStockPosition());
+			    } else {
+			    	optionAllTrades.put(tradeDay,  account.getDayTrades());
+			    }
 				
 				
 				totalTradeCost+=account.getTradeCost();
@@ -353,7 +360,11 @@ public class MainSimulation {
 
 				if (j == initialDayIndex.size() - 1) {
 					// this is the end so analyze all trades
-					analyzeAllTrades();
+					if (! account.getTradeOption()) {
+					    analyzeAllTrades();
+					} else {
+						optionAnalyzeAllTrades();
+					}
 				}
 		
 		 }
@@ -424,6 +435,77 @@ public class MainSimulation {
 		log.info(" " );
 		analyze_trading_stats();
 				
+	}
+	
+	
+	public static void optionAnalyzeAllTrades() {
+		
+		int numberOfTrades=0;
+		int numberOfWinningTrades =0;
+		int numberofLoosingTrades=0;
+		double currentGain=0D;
+		double gain = 0;
+		double currentLoss=0D;
+		double totalGain;
+		
+		
+		if (!optionAllTrades.isEmpty()) {
+			
+			for (Map<Integer, List<OptionPosition>> m : optionAllTrades.values()) {
+				
+				for (List<OptionPosition> l : m.values()) {
+					
+					for (OptionPosition option : l) {
+						
+						gain=(option.getPriceSold()-option.getPriceBought())*(double)option.getQuantity();
+						numberOfTrades+=1;
+						//log.info("Number of trades " + numberOfTrades);
+						//log.info("gain is " + gain);
+						//log.info(" number of winnig trade  " + numberOfWinningTrades + " Number of loosing " + numberofLoosingTrades);
+						if (gain >= 0.0  ) {
+							numberOfWinningTrades++;
+							currentGain += gain;
+						} else {
+							numberofLoosingTrades++;
+							currentLoss+=gain;
+						}
+						
+						
+					}
+					
+					
+				}
+				
+				
+			}
+			
+			
+			totalGain = currentGain+currentLoss;
+			log.info("Total for the simulation run *****************************START ");
+			log.info("Total for the simulation run *****************************START ");
+			log.info("Total for the simulation run *****************************START ");
+			log.info("Number of Trades is: " + numberOfTrades);
+			log.info("Number of Winning Trades is: " + numberOfWinningTrades+ " Percentage is: " + ((double)numberOfWinningTrades/numberOfTrades));
+			log.info("Number of Loosing Trades is " + numberofLoosingTrades+ " Percentage is: " + ((double)numberofLoosingTrades/numberOfTrades) );
+			log.info("Gain from the trades is " + currentGain);
+			log.info("Loss from the trades is " + currentLoss);		
+			log.info("Total Gain is: " + totalGain);
+			log.info("Trade Cost is : " + totalTradeCost);
+			log.info("Gain minus trade cost is: " + (totalGain - totalTradeCost) );
+			log.info("Return on capital " + (totalGain-totalTradeCost)/(double)capital_available);
+			log.info("Capital allocated " + (capital_available) + " Max number of positions " + maxNumberOfPositions );
+			log.info("Total for the simulation run *****************************END ");
+			log.info("Total for the simulation run *****************************END ");
+			log.info("Total for the simulation run *****************************END ");
+			log.info(" " );
+			log.info(" " );
+			
+			
+			
+			
+			
+		}
+		
 	}
 	
 	public static String getDB(String initialDate) {

@@ -2,26 +2,9 @@
 <config>
   <stock>
     <symbol>GOOGL</symbol>
-    <change>3</change>
+    <change>5</change>
     <profit>3</profit>
     <loss>3</loss>
-    <lot>60</lot> 
-    <closePosition>false</closePosition>
-    <openLongPosition>false</openLongPosition>
-    <openShortPosition>false</openShortPosition>
-    <openLongPositionWithPrice>false</openLongPositionWithPrice>
-    <priceForLongPosition>0</priceForLongPosition>
-    <openShortPositionWithPrice>false</openShortPositionWithPrice>
-    <priceForShortPosition>0</priceForShortPosition>
-    <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>4</strategy>
-    <tradeable>true</tradeable>
-  </stock>
-  <stock>
-   <symbol>AAPL</symbol>
-    <change>0.4</change>
-    <profit>0.4</profit>
-    <loss>0.4</loss>
     <lot>500</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
@@ -31,7 +14,26 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>4</strategy>
+    <strategy>3</strategy>
+    <impVol>0.20</impVol>
+    <tradeable>true</tradeable>
+  </stock>
+  <stock>
+   <symbol>AAPL</symbol>
+    <change>0.7</change>
+    <profit>0.4</profit>
+    <loss>0.4</loss>
+    <lot>3000</lot> 
+    <closePosition>false</closePosition>
+    <openLongPosition>false</openLongPosition>
+    <openShortPosition>false</openShortPosition>
+    <openLongPositionWithPrice>false</openLongPositionWithPrice>
+    <priceForLongPosition>0</priceForLongPosition>
+    <openShortPositionWithPrice>false</openShortPositionWithPrice>
+    <priceForShortPosition>0</priceForShortPosition>
+    <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
+    <strategy>3</strategy>
+    <impVol>0.20</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -49,7 +51,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>INTC</symbol>
@@ -66,7 +69,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>CSCO</symbol>
@@ -83,14 +87,15 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>QQQ</symbol>
     <change>0.5</change>
-    <profit>0.5</profit>
-    <loss>0.5</loss>
-    <lot>1000</lot> 
+    <profit>0.3</profit>
+    <loss>0.3</loss>
+    <lot>3000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -99,7 +104,8 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>4</strategy>
+    <strategy>3</strategy>
+    <impVol>0.20</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -117,7 +123,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>NFLX</symbol>
@@ -134,7 +141,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock>
    <stock>
     <symbol>FB</symbol>
@@ -151,7 +159,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>SPY</symbol>
@@ -168,6 +177,7 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>1</strategy>
+    <impVol>0.20</impVol>
     <tradeable>false</tradeable>
   </stock>  
   <stock>
@@ -185,7 +195,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
    </stock> 
    <stock>
     <symbol>QCOM</symbol>
@@ -202,7 +213,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock>  
     <stock>
     <symbol>YHOO</symbol>
@@ -219,7 +231,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>EBAY</symbol>
@@ -236,7 +249,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock> 
   <stock>
     <symbol>IBM</symbol>
@@ -253,6 +267,7 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
+    <impVol>0.20</impVol>
     <tradeable>false</tradeable>
   </stock>
   <stock>
@@ -270,6 +285,7 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>4</strategy>
-    <tradeable>true</tradeable>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
   </stock>
 </config>

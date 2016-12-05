@@ -60,6 +60,12 @@ public class Stock {
 	int strategyID;
 	static long modifiedTime=0L;
 	Strategy strategy;
+	double impVol;
+	
+	public double getImpVol() {
+		return impVol;
+	}
+
 	List<Integer> volumeVector;	
 	static List<Stock> listOfStocks = new ArrayList<Stock>(); // contains all the stocks of interest for the trading session
     
@@ -349,6 +355,15 @@ public class Stock {
 			     }
 		        
 		        if (event.isStartElement()) {
+		        	if (event.asStartElement().getName().getLocalPart().equals("impVol")) {
+		        		event = eventReader.nextEvent();
+		                stock.impVol = Double.valueOf(event.asCharacters().getData());
+		                continue;
+		        	
+		             }
+			     }
+		        
+		        if (event.isStartElement()) {
 		        	if (event.asStartElement().getName().getLocalPart().equals("tradeable")) {
 		        		event = eventReader.nextEvent();
 		                stock.tradeable = Boolean.parseBoolean(event.asCharacters().getData());
@@ -542,6 +557,15 @@ public class Stock {
 			        		event = eventReader.nextEvent();
 			        		modifiedStock.strategyID = Integer.valueOf(event.asCharacters().getData());             
 			                continue;		        	
+			             }
+				     }
+			        
+			        if (event.isStartElement()) {
+			        	if (event.asStartElement().getName().getLocalPart().equals("impVol")) {
+			        		event = eventReader.nextEvent();
+			                modifiedStock.impVol = Double.valueOf(event.asCharacters().getData());
+			                continue;
+			        	
 			             }
 				     }
 			        

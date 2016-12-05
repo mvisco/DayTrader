@@ -71,9 +71,9 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 	
 	
 	public MeanReversionStrategyNeq2(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
-			double profit, List<Integer> v) {
+			double profit, double impVol, List<Integer> v) {
 		
-		super(symbol, symbol_lot, change, isTradeable, account, loss, profit, v);
+		super(symbol, symbol_lot, change, isTradeable, account, loss, profit, impVol, v);
 		this.StrategyState = States.S0;
 		this.currentState = States.S0;
 		this.desiredState = States.S0;
@@ -145,7 +145,7 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 		 
 		deltaVolume = avgVolume/volumePortion;
 		count++;
-		if ( ((count % 60) == 0 ) && (display)){
+		//if ( ((count % 60) == 0 ) && (display)){
 		    log.info(quote.getSymbol() +  " State " + StrategyState);
 		    log.info("Bid : " + Math.round(currentBid*100)/100.0 + " ,Ask : " + Math.round(currentAsk*100)/100.0 +" ; Mean is: " + Math.round(mean*100)/100.0 + " ;difference is " + 
 		         Math.round((currentPrice-mean)*100)/100.0 + " ; objective_change is " + this.objective_change);
@@ -161,7 +161,7 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 			    log.info("The position price we are in is : " + this.price);			
 		    }
             log.info("        ");
-		}
+		//}
 		// Do not trade before 7:35
 		if ( (hours == 7) && (minutes <= 34) ) {
 			//log.info("Not time yet to trade, time is: " + quote.getCurrentDateTime());
@@ -223,7 +223,7 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 			// we are in this state because we sold one lot
 			// close position if we made "profit" or we lost "loss"
 
-				if ( (currentAsk <= this.price-this.profit) ) {
+				if ( (currentBid <= this.price-this.profit) ) {
 					if (display) {
 					    log.info("State S1 attempting to close position at profit on symbol" + quote.getSymbol());
 					}
@@ -234,7 +234,7 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 				    account.buy_or_sell(BUY, CLOSE, quote, lot, this);
 				    // We clear the mean at the end of every cycle
 				    clearMean();
-				} else if ((currentAsk >= (this.price+this.objective_change)) ){
+				} else if ((currentBid >= (this.price+this.objective_change)) ){
 					if (display) {
 					   log.info("State S1:  attempting to sell another lot of stocks for symbol: " + quote.getSymbol() + " at bid " + currentBid);
 					   log.info("Date is " + getDate);
@@ -258,7 +258,7 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 						
            
             	
-				if (currentBid >= (this.price+this.profit)) {
+				if (currentAsk >= (this.price+this.profit)) {
 					if (display) {
 					    log.info("State S2 attempting to close position at profit on symbol" + quote.getSymbol());
 					}
@@ -269,7 +269,7 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 				    account.buy_or_sell(SELL, CLOSE, quote, lot, this);
 				    // We clear the mean at the end of every cycle
 				    clearMean(); 
-				} else if (currentBid <= (this.price - this.objective_change) ){
+				} else if (currentAsk <= (this.price - this.objective_change) ){
 					
 					if (display) {
 					    log.info("State S2  attempting to buy  another lot of stocks for symbol: " + quote.getSymbol()+ " at ask " + currentAsk);
@@ -294,8 +294,9 @@ public class MeanReversionStrategyNeq2 extends Strategy{
 					if (display)
 					    log.info("State S3 attempting to close position at profit on symbol" + quote.getSymbol());
 				} else {
-					if (display)
-					    log.info("State S3 attempting to close position at loss on symbol" + quote.getSymbol());
+					if (display) {
+					    //log.info("State S3 attempting to close position at loss on symbol" + quote.getSymbol());
+					}
 				}
 				
 				this.currentState = States.S3;

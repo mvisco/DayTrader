@@ -46,9 +46,10 @@ public abstract class  Strategy {
 	Level1Quote lastQuote;
 	int minute_mean_position = 0;
 	boolean display=true;
+	double impVol;
 	
 	public Strategy(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
-			double profit, List<Integer> v) {
+			double profit, double impVol, List<Integer> v) {
 		
 		this.symbol = symbol;
 		this.lot = symbol_lot;
@@ -61,6 +62,7 @@ public abstract class  Strategy {
 		this.averageVolume = v;
 		this.stats = new DescriptiveStatistics();
 		this.lastQuote = new Level1Quote();
+		this.impVol = impVol;
 		
 	}
 	
@@ -184,5 +186,11 @@ public abstract class  Strategy {
 	public void updateDisplay(Boolean display) {
 		this.display=display;
 	}
+
+	public double getImpVol() {
+		return impVol;
+	}
+
+	
 	
 }

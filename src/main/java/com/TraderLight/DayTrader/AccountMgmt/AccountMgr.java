@@ -11,12 +11,20 @@
 
 package com.TraderLight.DayTrader.AccountMgmt;
 
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.apache.log4j.Logger;
+
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 import com.TraderLight.DayTrader.Strategy.Strategy;
@@ -38,10 +46,16 @@ public class AccountMgr {
 	private double cash ;
 	private final double maxCapital = -25000.0;
 	
+	//Stock Objects
 	private List<StockPosition> positions;
 	private List<StockPosition> historyPositions;
 	
+	//Option Objects
+	private Map<String,List<OptionPosition>> optionPositions;
+	private Map<Integer, List<OptionPosition> > dayTrades;
+	
 	private double tradeCost = 0;
+	private double optionTradeCost = 0;
 	private double currentTradeCost=0D;
 	private final Lock updateLock=new ReentrantLock();
 	private String broker;
@@ -50,20 +64,30 @@ public class AccountMgr {
 	private int positionOpen =  0 ; // number of positions open simultaneously
 	boolean mock;
 	double totalGain;
+	boolean tradeOption = true;
+	private String optionSymbolInTheMoney = "";
+	private String optionSymbolOutoftheMoney = "";
 	
 	
-	public AccountMgr(int maxNumberOfPositions, boolean mock) {
+	public AccountMgr(int maxNumberOfPositions, boolean mock, boolean tradeOption) {
 		
 		this.cash = 0;
 		positions = new ArrayList<StockPosition>();	
 		historyPositions = new ArrayList<StockPosition>();
+		optionPositions = new HashMap<String, List<OptionPosition>>();
+		dayTrades = new HashMap<Integer, List<OptionPosition>>();
 		this.max_number_of_positions = maxNumberOfPositions;
 		this.mock = mock;
-		
-		
+		this.tradeOption = tradeOption;		
 	}
 	
 	public void buy_or_sell (String buy_sell, String open_close_update, Level1Quote quote, int lot, Strategy strategy) {
+		
+		if (this.tradeOption == true) {
+			// call the option related method
+			option_buy_or_sell(buy_sell, open_close_update, quote, lot, strategy);
+			return;
+		}
 				
 		log.info("Entering buy_or_sell method" + " buy_sell is " + buy_sell + " positionOpen is " + positionOpen);
 		
@@ -112,6 +136,566 @@ public class AccountMgr {
 		return;		
 	}
 	
+	public void option_buy_or_sell (String buy_sell, String open_close_update, Level1Quote quote, int lot, Strategy strategy) {
+		
+		/*
+		 * Options are different than stocks when the strategy issue an order. The following table applies for option:
+		 * buy_sell = buy open_close_update = open then we need to buy a lot of calls
+		 * buy_sell = buy open_close_update = update  then we need to buy another lot of calls
+		 * buy_sell = buy open_close_update = close then it means that we have puts that we need to sell
+		 * buy_sell = sell open_close_update = open then we need to buy a lot of puts
+		 * buy_sell = sell open_close_update = update  then we need to buy another lot of puts
+		 * buy_sell = sell open_close_update = close  then it means that we have calls that we have to sell
+		 */
+		
+		log.info("Entering option_buy_or_sell method" + " buy_sell is " + buy_sell + " positionOpen is " + positionOpen);
+		if ( open_close_update.contentEquals("open")  && (positionOpen >= max_number_of_positions) ) {
+			// return failure to the strategy
+			log.info("Not allowing opening a new position for symbol " + quote.getSymbol());
+			// increase position open it will be decreased in returnOrderParameters when we return failure
+			//positionOpen++;
+			optionReturnOrder(false, quote.getSymbol(), " ", buy_sell, strategy );
+			return;
+		}
+		
+		if (open_close_update.contentEquals("open")) {
+			positionOpen++;
+		}
+		boolean call_put = true;		
+		if (open_close_update.contentEquals("open") || open_close_update.contentEquals("update") ) {
+			if (buy_sell.contentEquals("buy")) {
+				// buy calls
+				buyOption(quote, lot, call_put, strategy, false, buy_sell);
+			} else {
+				// buy puts
+				call_put = false;
+				buyOption(quote, lot, call_put, strategy, false, buy_sell);
+			}
+		} else {
+			// close case sell everything we got
+			sellOption(quote, quote.getSymbol(), strategy, buy_sell);
+		}	
+	}
+	
+    public void buyOption (Level1Quote quote, int lot, boolean call_put, Strategy strategy, boolean inTheMoney, String buy_sell) {	
+		
+		String optionSymbol="";
+		double optionPrice;
+		double Xprice;
+		double Sprice;
+		double T1;
+		
+		
+		Sprice = quote.getLast();
+		optionSymbol=optionSymbolWeekly(quote,call_put, inTheMoney);
+		Xprice = getExercisePricefromSymbol(optionSymbol);
+		T1 = getExpirationTime(quote);		
+		OptionCostProvider ocp = new OptionCostProvider();
+		double sigma = strategy.getImpVol();
+		
+		if (call_put) {
+			Sprice = quote.getAsk();
+			optionPrice = ocp.getCallCost(Sprice,Xprice,T1,sigma);
+			log.info("Option symbol " + optionSymbol);
+			log.info("Buy price is " + optionPrice + " Quantity is " + lot);
+			log.info("delta of the option is " + ocp.getCallDelta(Sprice, Xprice, T1, sigma));
+			
+		} else {
+			Sprice = quote.getBid();
+			optionPrice = ocp.getPutCost(Sprice,Xprice,T1,sigma);
+			log.info("Option symbol " + optionSymbol);
+			log.info("Buy price is " + optionPrice);
+			log.info("Buy price is " + optionPrice + " Quantity is " + lot);
+			log.info("delta of the option is " +  ocp.getPutDelta(Sprice, Xprice, T1, sigma));
+			
+		}
+		// When buying simulate bid-ask spread .....
+		
+		if (optionPrice<3.0) {
+			optionPrice=optionPrice+0.01;
+		} else {
+			optionPrice=optionPrice+0.1;
+		}
+		
+		double totalOptionPrice=optionPrice*lot;	    
+	    double singleTradeCost= (optionTradeCost+0.15*(lot/100)); 
+	    updateCash(totalOptionPrice, true, singleTradeCost);
+	    OptionPosition option = new OptionPosition(optionSymbol, optionPrice, lot, singleTradeCost);
+		 
+		// add to positions
+	    if (optionPositions.containsKey(quote.getSymbol())) {
+	    	// symbol already exists in the map
+	    	optionPositions.get(quote.getSymbol()).add(option);
+	    } else {
+	    	List<OptionPosition> listOption = new ArrayList<OptionPosition>();
+	    	listOption.add(option);
+	    	optionPositions.put(quote.getSymbol(), listOption);
+	    }
+    
+		optionReturnOrder(true, quote.getSymbol(), " ", buy_sell , strategy );
+		return;
+	 }
+
+
+    public void sellOption (Level1Quote quote, String symbol, Strategy strategy, String buy_sell) {	
+	// we have to sell all options associated with symbol
+
+    	Integer quantity;
+    	double  optionPrice;
+
+    	//log.info("Entering sell method for symbol " + symbol);
+    	//log.info("Date is " + quote.getCurrentDateTime());
+    	double Sprice = quote.getLast();
+    	double Xprice=0;
+    	double expirationTime = getExpirationTime(quote);
+    	OptionCostProvider optionQuote = new OptionCostProvider();
+
+    	double sigma = strategy.getImpVol();
+    	
+    	if (!optionPositions.containsKey(quote.getSymbol())) {
+    		log.info( " Something is asking to sell positions that we do not have ");
+    		optionReturnOrder(false, quote.getSymbol(), " ", buy_sell, strategy );
+    		return;
+    	}
+    	
+    	// get list of options to sell
+    	List<OptionPosition> listOfOption;
+    	listOfOption = optionPositions.get(quote.getSymbol());
+    	
+    	for (OptionPosition option : listOfOption) {
+
+    	    Xprice = getExercisePricefromSymbol(option.getSymbol());
+    	    quantity = option.getQuantity();
+    	    if (getCallOrPutfromSymbol(option.getSymbol()).equals("C")) {
+    	    	 Sprice = quote.getBid();
+    		     optionPrice = optionQuote.getCallCost(Sprice, Xprice, expirationTime,sigma);
+    		     option.setPriceSold(optionPrice);
+    		     log.info("Option symbol " + option.getSymbol());
+    		     log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
+    		     log.info("delta of the option is " + optionQuote.getCallDelta(Sprice, Xprice, expirationTime, sigma));
+
+    	    } else {
+    	    	Sprice = quote.getAsk();
+    		    optionPrice = optionQuote.getPutCost(Sprice, Xprice, expirationTime,sigma);
+    		    option.setPriceSold(optionPrice);
+    		    log.info("Option symbol " + option.getSymbol());
+    		    log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
+    		    log.info("delta of the option is " + optionQuote.getPutDelta(Sprice, Xprice, expirationTime, sigma));
+    	    }
+    	    double totalOptionPrice=optionPrice*option.getQuantity();
+    	    
+    	    double singleTradeCost= (optionTradeCost+0.15*(option.getQuantity()/100));
+    	    option.updateCost(singleTradeCost);
+    	    updateCash(totalOptionPrice, false, singleTradeCost);
+    	}
+    	
+    	// get the list of trades to the dayTrades structure
+    	int i = 0;
+    	while (true) {
+    		i++;
+    		if (!dayTrades.containsKey(i)) {
+    			dayTrades.put(i, listOfOption);
+    			break;
+    		}
+    	}
+    	
+    	// clear the current position  for this symbol because they have been closed
+    	optionPositions.remove(quote.getSymbol());
+    	// reduce positions
+    	positionOpen--;
+    	optionReturnOrder(true, quote.getSymbol(), " ", buy_sell , strategy );
+		return;
+    	
+    }
+
+    
+    public void optionReturnOrder(Boolean success, String symbol, String price, String buy_sell, Strategy strategy) {
+    	
+    	if (!success) {	  
+  		  // if no success on filling the order tell the strategy to adjust and return
+  		  strategy.strategyCallback(false, symbol, buy_sell, "0");	  
+  		  return;
+  	    }
+    	strategy.strategyCallback(true, symbol, buy_sell, price);
+    	
+    	
+    }
+	
+	@SuppressWarnings("deprecation")
+	public String optionSymbolWeekly(Level1Quote quote, boolean buy, boolean inTheMoney) {
+		
+		/**
+		  * These are the rules we follow to determine the option symbol:
+		  * 
+		  * 1) if price of the underlying is "close" to a strike price we take the first in the money strike for both put and calls.
+		  * For price "close to strike" we mean that if we have 555.99 or 35.59 they will be treated as 555 and 35.50 and therefore for calls we will take 
+		  * 552.5 and 35 while for puts we will take 557.5 and 36. Consider that if we have 35.60 we will take 36 for the puts but 35.5 for the calls....
+		  * So the key difference between the two  cases if the first decimal digit.
+		  * 
+		  * 2) for other underlying prices we will take the first in the money calls or puts. For example for 35.20 we will take 35 for calls and 35.5 
+		  * for puts. For 552 we will take  550 for calls strike and 552.5 for puts strike.
+		  * 
+		  * 3) If today is Friday or Thursday we will trade next week options to diminish the effect of time decay.
+		  * 
+		  * 4) if this the 3rd week of the month (or if next week is the the third week of the month if today is Friday or Thursday) we will trade the monthly option 
+		  *    this only means  that the expiration day in the symbol is the Saturday of the week and not the Friday
+		 **/
+		
+		String expiration;
+		String callOrPut = "";
+		String optionSymbol=""; // in the money option symbol
+		double price;
+		String symbol;
+		int optionPrice; // this is the difference between the asset price and the remainder of modulo 5. 
+    	int outOfTheMoneyOptionPrice; // first out of the money price
+    	int inTheMoneyOptionPrice; // first in the money price
+    	double doubleoutOfTheMoneyOptionPrice=0;
+    	double doubleinTheMoneyOptionPrice=0;
+		
+		price = quote.getLast();
+		if (buy) {
+			callOrPut = "C";
+			
+		} else {
+			callOrPut = "P";
+			
+		}
+		
+		symbol = quote.getSymbol();
+		
+		Date date = quote.getCurrentDateTime();
+		int day = date.getDate();
+		int month = date.getMonth();
+		int year = date.getYear()+1900;
+		
+		//log.info("Date is " + date);
+		//log.info(year + " " + month + " " + day);
+		
+		Calendar rightNow = Calendar.getInstance();
+		rightNow.set(year, month, day);
+		
+		Calendar first = (Calendar) rightNow.clone();
+	    first.add(Calendar.DAY_OF_WEEK, first.getFirstDayOfWeek() - first.get(Calendar.DAY_OF_WEEK));
+	    
+	    // and add 5 days to get to Friday of the week
+	    first.add(Calendar.DAY_OF_YEAR, 5);
+	    
+		if ( (date.getDay() == 5) || (date.getDay() == 4) ) {
+			
+			// Thursday and Friday trade next week options.
+			first.add(Calendar.DAY_OF_YEAR, 7);		    			
+		}
+		
+		int week = first.get(Calendar.WEEK_OF_MONTH);
+		
+		if (week == 3) {
+			
+		    	//log.info("this is the third week of the month " + week);
+		    	// in this case the expiration is Saturday because we are trading  a monthly option and not a weekly option
+		    	first.add(Calendar.DAY_OF_YEAR, 1);		    	
+		}
+				
+	    log.info("Option Expiration time that we are using is:  " + first.getTime());
+	    
+	    SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+	    expiration = df.format(first.getTime());
+	    
+	    
+	    if (price >= 150) {
+	    		    	
+	    	int k = (int) (price%5);	    	
+	    	optionPrice = (int) price - k;
+	    	//log.info("optionPrice is " + optionPrice);
+	    	//log.info("k is " + k);
+	    	
+	     	if ( callOrPut == "P") {
+	     		
+	     	    // for puts  optionPrice is lower or equal to current underlying price (because it is  price-k1) 	     			     		
+	     		
+	     		if (k != 0) {
+	     			
+	     			// k should only be 1,2,3 or 4 
+	     			
+	     			if ( (k == 1) || (k ==2) ) {
+	     				// this is the case of 531,532  or 536,537 etc...
+	     				doubleinTheMoneyOptionPrice = optionPrice+2.5;
+	    	     		doubleoutOfTheMoneyOptionPrice = optionPrice;	     				
+	     			    
+	     			} else if ( (k==3) || (k == 4) ) {
+	     			    // this is the case of 533,534  or 538,539 etc...
+	     				doubleoutOfTheMoneyOptionPrice=optionPrice+2.5;
+	     			    doubleinTheMoneyOptionPrice=optionPrice+5;
+	     			} else {
+	     				// this should never happen
+	     				log.info("Got into a situation where k is different that what expected for put. Price is: " + price);
+	     				// not sure what to do here. Let's do this .....
+	     				doubleinTheMoneyOptionPrice = optionPrice+2.5;
+	    	     		doubleoutOfTheMoneyOptionPrice = optionPrice;
+	     			}
+	     			
+	     			
+	     		} else {
+	     			// this is the case of 530 or 535
+	     			doubleinTheMoneyOptionPrice=optionPrice+2.5;
+	     			doubleoutOfTheMoneyOptionPrice = optionPrice;
+	     		}     		
+	     			
+	     	} else {
+	     		
+	     	    // for calls optionPrice will  be the in the money price (being lower than asset price) except for the case when there is no remainder 
+	     		// in this case we get the first one below. Consider that if we have something like 595.99 it will have a 0 remainder so the first 
+	     		// call in the money strike price will be 592.50	     		
+	     		if (k != 0) {
+	     			
+	     			// k should only be 1,2,3 or 4 
+	     			if ( (k == 1) || (k ==2) ) {
+	     				// this is the case of 531,532  or 536,537 etc...
+	     				
+	     				doubleoutOfTheMoneyOptionPrice=optionPrice+2.5;
+	     			    doubleinTheMoneyOptionPrice=optionPrice;
+	     			    
+	     			} else if ( (k==3) || (k == 4) ) {
+	     			    // this is the case of 533,534  or 538,539 etc...
+	     				doubleoutOfTheMoneyOptionPrice=optionPrice+5;
+	     			    doubleinTheMoneyOptionPrice=optionPrice+2.5;
+	     			} else {
+	     				// this should never happen
+	     				log.info("Got into a situation where k is different that what expected for call. Price is: " + price);
+	     				// not sure what to do here. Let's do this .....
+	     				doubleoutOfTheMoneyOptionPrice=optionPrice+2.5;
+	     			    doubleinTheMoneyOptionPrice=optionPrice;
+	     			}
+	     			
+	     			
+	     		} else {
+	     			// this is the case of 530 or 535
+	     			doubleinTheMoneyOptionPrice=optionPrice-2.5;
+	     			doubleoutOfTheMoneyOptionPrice = optionPrice;
+	     		}
+	     	}
+	     		     	
+	    	optionSymbol=symbol+":"+expiration+":"+doubleinTheMoneyOptionPrice+":"+callOrPut;	    	
+	    	this.optionSymbolInTheMoney=optionSymbol;
+	    	this.optionSymbolOutoftheMoney = symbol+":"+expiration+":"+doubleoutOfTheMoneyOptionPrice+":"+callOrPut;	    	
+	    	
+	    } else {
+	    	
+	    	price = price *10;
+	    	int k1 = (int) (price%5);
+	    	optionPrice = (int) price - k1;
+	    	//log.info("optionPrice is " + optionPrice);
+	    	//log.info("k1 is " + k1);
+	    	
+	     	if ( callOrPut == "P") {
+	     		
+	     		// for puts because optionPrice is lower or equal to current underlying price (because it is  price-k1) it will be always the 
+	     		// out of the money option while priceOption+5 will always be the in the money option strike.		     		
+	     		outOfTheMoneyOptionPrice=optionPrice;
+	     		inTheMoneyOptionPrice = optionPrice+5;	   	     			
+	     	} else {
+	     		
+	     		// for calls optionPrice will  be the in the money price (being lower than asset price) except for the case when there is no remainder 
+	     		// in this case we get the first one below. Consider that if we have something like 39.59 it will have a 0 remainder so the first 
+	     		// call in the money will be 39     		
+	     		if (k1 != 0) {
+	     			outOfTheMoneyOptionPrice=optionPrice+5;
+	     			inTheMoneyOptionPrice  = optionPrice;
+	     			
+	     		} else {
+	     			outOfTheMoneyOptionPrice=optionPrice;
+	     			inTheMoneyOptionPrice  = optionPrice-5;
+	     			
+	     		}
+	     	}
+	     	
+	     	doubleinTheMoneyOptionPrice = (double) inTheMoneyOptionPrice/10D; // in the money price
+	     	doubleoutOfTheMoneyOptionPrice = (double) outOfTheMoneyOptionPrice/10D; // out of the money price	
+	    	
+	    	// for cases like 39.0 the use of following code should transform it in 39 otherwise AMTD complains. 
+	    	// Also cases like 39.5 should still be represented as such.
+	    	DecimalFormat format = new DecimalFormat();	    	
+	        format.setDecimalSeparatorAlwaysShown(false);
+	    	
+	    	optionSymbol=symbol+":"+expiration+":"+format.format(doubleinTheMoneyOptionPrice)+":"+callOrPut;
+	    	this.optionSymbolInTheMoney=optionSymbol;
+	    	this.optionSymbolOutoftheMoney = symbol+":"+expiration+":"+format.format(doubleoutOfTheMoneyOptionPrice)+":"+callOrPut;
+	    }
+	    				
+		//log.info("Weekly symbol option IN the money is " + this.optionSymbolInTheMoney);
+		//log.info("Weekly symbol option OUT of the money is " + this.optionSymbolOutoftheMoney);
+		
+		if (!inTheMoney) {
+			
+			log.info("Weekly Option Symbol returned is" + optionSymbolOutoftheMoney);
+			return optionSymbolOutoftheMoney;
+		}
+		log.info("Weekly Option Symbol returned is" + optionSymbol);
+		return optionSymbol;
+		
+	}
+	
+	@SuppressWarnings("deprecation")
+	public double getExpirationTime(Level1Quote quote) {
+		Date date=quote.getCurrentDateTime();
+		
+		int daysToExpiration;
+		int hours = date.getHours();
+		int day = date.getDay();
+		//log.info("Date is " + date);
+		//log.info(year + " " + month + " " + day);
+		log.info("day is " + date.getDay());
+		// if trading next week option it should be 12 -day if trading same week 5-day.
+       if ( (date.getDay() == 5) || (date.getDay() == 4) ) {
+			
+			// Thursday and Friday trade next week options
+			// if trading next week option it should be 12 -day if trading same week 5-day..			
+			 daysToExpiration = 12-day;	    			
+		} else {
+			 daysToExpiration = 5-day;
+		}
+       
+       log.info("days to expiration is  " + daysToExpiration);
+       
+		
+		// fraction of day depends on the hours. Weekly option expire on Friday at the close of market so 
+		// assume the following if 7 add 7/7 if 8 add 6/7 ....... if 13 add 1/7 to day
+		// The above  is not right all the time however it is  right on Friday the last day of the week
+		// so for simulation does not really matter that is not right the other days of the week because we do not 
+		// hold position for days.
+		
+		double fractionOfDay;
+		
+		if (hours == 7) {
+			fractionOfDay = 1.0;
+		} else if (hours == 8) {
+			fractionOfDay = 6.0/7.0;
+		} else if (hours == 9) {
+			fractionOfDay = 5.0/7.0;
+		} else if (hours == 10) {
+			fractionOfDay = 4.0/7.0;
+		} else if (hours == 11) {
+			fractionOfDay = 3.0/7.0;
+		} else if (hours == 12) {
+			fractionOfDay = 2.0/7.0;
+		} else if (hours ==13) {
+			fractionOfDay = 1.0/7.0;
+		} else {
+			fractionOfDay = 0.01;
+		}
+		
+		double T1 = ((double)daysToExpiration +fractionOfDay)/365.0;
+		log.info( "T1 is " + T1);
+		return T1;
+	}
+	
+	public double getExercisePrice(Level1Quote quote, boolean buy, boolean inTheMoney) {
+		
+
+		String callOrPut = "";
+		double price;
+	
+		if (buy) {
+			callOrPut = "C";
+		} else {
+			callOrPut = "P";
+		}
+		
+		price = quote.getLast();
+	    
+	    if (price >= 100) {
+	    	int k = (int) (price%5);
+	    	
+	    	int optionPrice; // in the money price
+	    	int optionPrice1; // first out of the money price
+	    	optionPrice = (int) price - k;
+	    	
+	        if (callOrPut == "P") {
+	     		optionPrice+=5;
+	     	}
+	        
+	     	if (k==0) {
+	     		optionPrice=(int)price;
+	     	}
+	    	
+	     	if ( callOrPut == "P") {
+	     		// out of the money calculation
+	     		if ( k!= 0 ) {
+	     			optionPrice1=optionPrice-5;
+	     		} else {
+	     			optionPrice1=optionPrice;
+	     		}
+	     			
+	     	} else {
+	     		//out of the money calculation
+	     		if (k != 0) {
+	     			optionPrice1=optionPrice+5;
+	     		} else {
+	     			optionPrice1=optionPrice;
+	     		}
+	     	}
+	     	
+	     	if (!inTheMoney) {
+	     		
+	     		return optionPrice1;
+	     	}
+	     	return optionPrice;    	
+	    	
+	    } else {
+	    	price = price *10;
+	    	int k1 = (int) (price%5);
+	    	int optionPrice; 
+	    	int optionPrice3; 
+	    	optionPrice = (int) price - k1;
+	    	
+	    	if (callOrPut == "P") {
+	     		optionPrice+=5;
+	     	}
+	     	if (k1==0) {
+	     		optionPrice=(int)price;
+	     	}
+	     	
+	     	if ( callOrPut == "P") {
+	     		if ( k1!= 0 ) {
+	     			optionPrice3=optionPrice-5;
+	     		} else {
+	     			optionPrice3=optionPrice;
+	     		}
+	     			
+	     	} else {
+	     		if (k1 != 0) {
+	     			optionPrice3=optionPrice+5;
+	     		} else {
+	     			optionPrice3=optionPrice;
+	     		}
+	     	}
+	    	double optionPrice1 = (double) optionPrice/10D; // in the money price
+	    	double optionPrice4 = (double) optionPrice3/10D; // out of the money price
+	    		    	
+	    	if (!inTheMoney) {
+	    		return optionPrice4;
+	    	}
+	    	return optionPrice1;
+	    }
+	    		
+		
+	}
+	
+	public double getExercisePricefromSymbol(String optionSymbol) {
+		
+		String[] symbolSplit = optionSymbol.split(":");
+		
+		return(Double.parseDouble(symbolSplit[2]));
+		
+		
+	}
+	
+	public String getCallOrPutfromSymbol(String optionSymbol) {
+		
+		String[] symbolSplit = optionSymbol.split(":");
+		return symbolSplit[3];
+		
+	}    
+	
 
 	public void updateCash(double totalPrice, boolean buy_sell) {
 		
@@ -127,6 +711,22 @@ public class AccountMgr {
 		log.info("Current Cash position is:            " + this.cash);
 		return;
 	}
+	
+    public void updateCash(double totalPrice, boolean buy_sell, double tradeCost) {
+		
+		// if buy_sell is true we are buying so cash out else we are selling so cash in
+		// assume that transaction cost  is tradeCost for transaction 
+		
+		if (buy_sell) {
+			this.cash = this.cash -totalPrice - (tradeCost);		
+		} else {
+			this.cash = this.cash + totalPrice - (tradeCost);			
+		}	
+		this.currentTradeCost += tradeCost;
+		log.info("Current Cash position is:            " + this.cash);
+		return;
+	}
+	
 
 	
 	public void returnOrderParameters(Boolean success, String symbol, String price, String lot, String buy_sell, Strategy strategy, String open_close_update) {
@@ -218,7 +818,11 @@ public class AccountMgr {
 		double priceBought;
 		double soldPrice;
 		double gain;
-		
+	
+	if ( this.tradeOption) {
+		analyzeOptionTrades();
+		return;
+	}
 		
 	if (display){
 		log.info("-------------------------------");
@@ -226,7 +830,9 @@ public class AccountMgr {
 		log.info("Analyzing Trades.........");
 		log.info("Analyzing Trades.........");
 		log.info("-------------------------------");
-	}	
+	}
+	
+	
 		Iterator<StockPosition> iterator = this.historyPositions.iterator();
 		
 		
@@ -265,6 +871,59 @@ public class AccountMgr {
 	}	
 	}
 	
+	private void analyzeOptionTrades() {
+		
+		int numberOfTrades=0;
+		int numberOfWinningTrades =0;
+		int numberofLoosingTrades=0;
+		double currentGain=0D;
+		double currentLoss=0D;
+		double totalGain=0;
+		String symbol;
+		int quantity;
+		double priceBought;
+		double soldPrice;
+		double gain;
+			
+		log.info("-------------------------------");
+		log.info("Analyzing Trades.........");
+		log.info("Analyzing Trades.........");
+		log.info("Analyzing Trades.........");
+		log.info("-------------------------------");
+		
+		for (List<OptionPosition> l : dayTrades.values()) {
+			
+			for (OptionPosition option : l ) {
+				
+				symbol=option.getSymbol();
+				quantity=option.getQuantity();	
+				priceBought = option.getPriceBought(); 
+				soldPrice=option.getPriceSold();
+				gain=(soldPrice-priceBought)*(double)option.getQuantity();				
+				numberOfTrades+=1;
+				log.info("These are the parameters of the trade: " + symbol + " " + quantity + " " 
+				         + priceBought + " " + soldPrice + " " + gain);
+				if (gain>0) {
+					numberOfWinningTrades = numberOfWinningTrades + 1;
+					currentGain+=gain;
+				} else if (gain<0) {
+					numberofLoosingTrades = numberofLoosingTrades +1;
+					currentLoss=currentLoss+gain;
+				}
+			    gain=priceBought=soldPrice=0;
+			    quantity=0;
+				
+			}
+		}
+		
+		totalGain = currentGain+currentLoss;
+		this.totalGain = totalGain;
+		log.info("Number of Total Trades: " + numberOfTrades + " " + " Number of Winning Trades: " + numberOfWinningTrades + 
+				  " Number of Loosing Trades: " + numberofLoosingTrades ) ;
+		log.info("Gain from Trades: " + currentGain + " Loss from Trades: " + currentLoss + " Total Gain/Loss: " + totalGain);
+		log.info("Total Transaction Costs are :" + this.currentTradeCost);	 // totalCost should be the same of currentTadeCost
+		
+	}
 	
 	public double getTradeCost() {
 		return currentTradeCost;
@@ -281,6 +940,7 @@ public class AccountMgr {
 			
 			// set up trade costs
 			this.tradeCost=4.2;
+			this.optionTradeCost = 3.5;
 					
 		} else {
 			
@@ -316,8 +976,11 @@ public class AccountMgr {
 	}
 
 	public void resetAcctMgr() {
+		this.cash = 0;
 		positions = new ArrayList<StockPosition>();	
 		historyPositions = new ArrayList<StockPosition>();
+		optionPositions = new HashMap<String, List<OptionPosition>>();
+		dayTrades = new HashMap<Integer, List<OptionPosition>>();
 		currentTradeCost=0D;
 		cash=0D;
 		
@@ -325,6 +988,14 @@ public class AccountMgr {
 	}
 	public double getTotalGain() {
 		return this.totalGain;
+	}
+	
+	public boolean getTradeOption() {
+		return this.tradeOption;
+	}
+	
+	public Map<Integer, List<OptionPosition>> getDayTrades() {
+		return this.dayTrades;
 	}
 
 }

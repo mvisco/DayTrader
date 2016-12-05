@@ -60,7 +60,7 @@ public class MainSimulationAlgo {
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
 		String initialDate = "2014-07-1";
-		String finalDate = "2014-07-31";
+		String finalDate = "2014-07-3";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -155,7 +155,7 @@ public class MainSimulationAlgo {
         Stock.populateStock("stock-2014-2.xml");
         List<Stock> listOfStocks = Stock.getListOfStocks();
 				
-		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock);
+		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock, true);
 		
         // populate broker and inform AccountMgr
         broker = args[0];
@@ -187,28 +187,28 @@ public class MainSimulationAlgo {
 			
 			if (stock.getStrategyID() == 0) {
 				Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-					stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+					stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);				
 				
 			} else if ( stock.getStrategyID() == 1) {
 				Strategy strategy = new MeanReversionStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);
 					
 		   } else if ( stock.getStrategyID() == 2) {
 			   Strategy strategy = new TrendStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 			   stock.setStrategy(strategy);
 			   
 		   } else if ( stock.getStrategyID() == 3) {
 				Strategy strategy = new MeanReversionStrategyNeq2(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);
 		   
 		   } else {
 			   log.info("Stategy ID not supported, assigning manual as default");
 			   Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 			   stock.setStrategy(strategy);
 			   
 		   }

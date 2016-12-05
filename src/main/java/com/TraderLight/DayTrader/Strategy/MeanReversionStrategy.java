@@ -67,9 +67,9 @@ public class MeanReversionStrategy extends Strategy{
 	
 	
 	public MeanReversionStrategy(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
-			double profit, List<Integer> v) {
+			double profit, double impVol, List<Integer> v) {
 		
-		super(symbol, symbol_lot, change, isTradeable, account, loss, profit, v);
+		super(symbol, symbol_lot, change, isTradeable, account, loss, profit, impVol, v);
 		this.StrategyState = States.S0;
 		this.currentState = States.S0;
 		this.desiredState = States.S0;
