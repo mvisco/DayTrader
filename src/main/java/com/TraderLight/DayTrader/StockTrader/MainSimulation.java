@@ -24,6 +24,7 @@ import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategyNeq2;
+import com.TraderLight.DayTrader.Strategy.MeanReversionStrategyNeq4;
 import com.TraderLight.DayTrader.Strategy.NewMeanReversion;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 import com.TraderLight.DayTrader.Strategy.TrendStrategy;
@@ -61,8 +62,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-11-28";
-		String finalDate = "2016-12-02";
+		String initialDate = "2016-09-12";
+		String finalDate = "2016-09-16";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -144,6 +145,9 @@ public class MainSimulation {
 			
 		}
 		
+		
+		
+		
         if (initialDayIndex.size() == 0) {
         	log.info("There are no days to run the simulation on............................");
         	System.exit(0);
@@ -177,6 +181,10 @@ public class MainSimulation {
 			defaultVolume.add(0);
 		}
 		
+		// Manipulate date to get previous day close from yahoo
+		String[] iD = initialDate.split("-");
+		String[] fD = finalDate.split("-");
+		
 		for (Stock stock : listOfStocks ) {
 			
 			// set  average volume for each stock				
@@ -185,6 +193,9 @@ public class MainSimulation {
 			} else {
 				stock.setVolumeVector(defaultVolume);
 			}
+			
+			
+			
 			// Instantiate strategy
 			
 			if (stock.getStrategyID() == 0) {
@@ -211,6 +222,11 @@ public class MainSimulation {
 				Strategy strategy = new NewMeanReversion(stock.getSymbol(), stock.getLot(), stock.getChange(),
 						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);	
+				
+		   } else if ( stock.getStrategyID() == 5) {
+				Strategy strategy = new MeanReversionStrategyNeq4(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
+				stock.setStrategy(strategy);
 		   
 		   
 		   } else {
@@ -257,36 +273,41 @@ public class MainSimulation {
 			    String tradeDay= "Day"+(j+1);
 			    List<Level1Quote> l = new ArrayList<Level1Quote>();
 			    
+			    // update the strategies with previous close for the day of the simulation
+			    for ( Stock s : listOfStocks) {
+			    	s.strategy.getPreviousClose(dates.get(j));
+			    }
+			    
 			    l=getRecord.getLevel1QuoteList(con, "ALL", morningOpenIndex, closeOpeningIndex);
 				  
-				  int i =0;			  
-				  
-				  //Iterate on all quotes
-				  for (Level1Quote newQuote : l) {
-				      i++;
-					  if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
-							continue;
-					  }						
-					  if (i >= (l.size() - 50)) {
-					      // Close all positions we are in the last 50 quotes
-						  lastQuote = newQuote;
-						  if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
-						      continue;
-						   }
-						   if (mapOfStocks.containsKey(newQuote.getSymbol()) && (mapOfStocks.get(newQuote.getSymbol()).getTradeable()==true)) {
-								mapOfStocks.get(newQuote.getSymbol()).getStrategy().closePositions(newQuote);
-								
-						   }
-						   continue;
-						}
-						
-						// send quote to strategy
-						if (mapOfStocks.containsKey(newQuote.getSymbol())) {
-							mapOfStocks.get(newQuote.getSymbol()).getStrategy().stateTransition(newQuote);
-										
-						}
-						
-				  }
+			    int i =0;			  
+
+			    //Iterate on all quotes
+			    for (Level1Quote newQuote : l) {
+			    	i++;
+			    	if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
+			    		continue;
+			    	}						
+			    	if (i >= (l.size() - 200)) {
+			    		// Close all positions we are in the last 200 quotes
+			    		lastQuote = newQuote;
+			    		if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
+			    			continue;
+			    		}
+			    		if (mapOfStocks.containsKey(newQuote.getSymbol()) && (mapOfStocks.get(newQuote.getSymbol()).getTradeable()==true)) {
+			    			mapOfStocks.get(newQuote.getSymbol()).getStrategy().closePositions(newQuote);
+
+			    		}
+			    		continue;
+			    	}
+
+			    	// send quote to strategy
+			    	if (mapOfStocks.containsKey(newQuote.getSymbol())) {
+			    		mapOfStocks.get(newQuote.getSymbol()).getStrategy().stateTransition(newQuote);
+
+			    	}
+
+			    }
 
 /*
 			    for (int i = morningOpenIndex;i < closeOpeningIndex  ;i++ ) {
