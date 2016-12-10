@@ -997,5 +997,85 @@ public class AccountMgr {
 	public Map<Integer, List<OptionPosition>> getDayTrades() {
 		return this.dayTrades;
 	}
+	
+	 public void sellOptionOneLeg (Level1Quote quote, String symbol, Strategy strategy, String buy_sell) {	
+			// we have to sell all options associated with symbol
 
+		    	Integer quantity;
+		    	double  optionPrice;
+
+		    	//log.info("Entering sell method for symbol " + symbol);
+		    	//log.info("Date is " + quote.getCurrentDateTime());
+		    	double Sprice = quote.getLast();
+		    	double Xprice=0;
+		    	double expirationTime = getExpirationTime(quote);
+		    	OptionCostProvider optionQuote = new OptionCostProvider();
+
+		    	double sigma = strategy.getImpVol();
+		    	
+		    	if (!optionPositions.containsKey(quote.getSymbol())) {
+		    		log.info( " Something is asking to sell positions that we do not have ");
+		    		optionReturnOrder(false, quote.getSymbol(), " ", buy_sell, strategy );
+		    		return;
+		    	}
+		    	
+		    	// get last option 
+		    	List<OptionPosition> listOfOption;
+		    	listOfOption = optionPositions.get(quote.getSymbol());
+		    	
+		    	OptionPosition option = listOfOption.get(listOfOption.size() -1);
+		    	Xprice = getExercisePricefromSymbol(option.getSymbol());
+	    	    quantity = option.getQuantity();
+	    	    if (getCallOrPutfromSymbol(option.getSymbol()).equals("C")) {
+	    	    	 Sprice = quote.getBid();
+	    		     optionPrice = optionQuote.getCallCost(Sprice, Xprice, expirationTime,sigma);
+	    		     option.setPriceSold(optionPrice);
+	    		     log.info("Option symbol " + option.getSymbol());
+	    		     log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
+	    		     log.info("delta of the option is " + optionQuote.getCallDelta(Sprice, Xprice, expirationTime, sigma));
+
+	    	    } else {
+	    	    	Sprice = quote.getAsk();
+	    		    optionPrice = optionQuote.getPutCost(Sprice, Xprice, expirationTime,sigma);
+	    		    option.setPriceSold(optionPrice);
+	    		    log.info("Option symbol " + option.getSymbol());
+	    		    log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
+	    		    log.info("delta of the option is " + optionQuote.getPutDelta(Sprice, Xprice, expirationTime, sigma));
+	    	    }
+	    	    double totalOptionPrice=optionPrice*option.getQuantity();
+	    	    
+	    	    double singleTradeCost= (optionTradeCost+0.15*(option.getQuantity()/100));
+	    	    option.updateCost(singleTradeCost);
+	    	    updateCash(totalOptionPrice, false, singleTradeCost);
+	    	    
+	    	    List<OptionPosition> listOfOption1 = new ArrayList<OptionPosition>();
+	    	    listOfOption1.add(option);
+		    	// get the list of trades to the dayTrades structure
+		    	int i = 0;
+		    	while (true) {
+		    		i++;
+		    		if (!dayTrades.containsKey(i)) {
+		    			dayTrades.put(i, listOfOption1);
+		    			break;
+		    		}
+		    	}
+		    	
+		    	
+		    	listOfOption.remove(listOfOption.size() -1);
+		    	optionReturnOrderOneLeg(true, quote.getSymbol(), " ", buy_sell , strategy );
+				return;
+		    	
+		    }
+
+	 public void optionReturnOrderOneLeg(Boolean success, String symbol, String price, String buy_sell, Strategy strategy) {
+	    	
+	    	if (!success) {	  
+	  		  // if no success on filling the order tell the strategy to adjust and return
+	  		  strategy.strategyCallback(false, symbol, buy_sell, "0");	  
+	  		  return;
+	  	    }
+	    	strategy.strategyCallbackOneLeg(true, symbol, buy_sell, price);
+	    	
+	    	
+	    }
 }

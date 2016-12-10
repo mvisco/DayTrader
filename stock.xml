@@ -2,9 +2,9 @@
 <config>
   <stock>
     <symbol>GOOGL</symbol>
-    <change>7</change>
-    <profit>7</profit>
-    <loss>7</loss>
+    <change>5</change>
+    <profit>3.5</profit>
+    <loss>5</loss>
     <lot>100</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
@@ -21,8 +21,8 @@
   <stock>
    <symbol>AAPL</symbol>
     <change>0.5</change>
-    <profit>0.5</profit>
-    <loss>0.5</loss>
+    <profit>0.3</profit>
+    <loss>0.35</loss>
     <lot>800</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
@@ -38,9 +38,9 @@
   </stock>
   <stock>
     <symbol>MSFT</symbol>
-    <change>0.5</change>
-    <profit>0.5</profit>
-    <loss>0.5</loss>
+    <change>0.4</change>
+    <profit>0.2</profit>
+    <loss>0.3</loss>
     <lot>1500</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
@@ -111,8 +111,8 @@
   <stock>
     <symbol>AMZN</symbol>
     <change>7</change>
-    <profit>7</profit>
-    <loss>3</loss>
+    <profit>3.5</profit>
+    <loss>5</loss>
     <lot>100</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
@@ -146,9 +146,9 @@
   </stock>
    <stock>
     <symbol>FB</symbol>
-    <change>1.3</change>
-    <profit>1.3</profit>
-    <loss>1.3</loss>
+    <change>0.7</change>
+    <profit>0.35</profit>
+    <loss>0.7</loss>
     <lot>700</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>

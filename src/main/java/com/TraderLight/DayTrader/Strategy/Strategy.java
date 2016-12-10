@@ -286,5 +286,11 @@ public abstract class  Strategy {
 		
 		return this.previousClose;
 	}
+
+	public void strategyCallbackOneLeg(boolean b, String symbol2,
+			String buy_sell, String price2) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }

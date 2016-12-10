@@ -62,8 +62,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-09-12";
-		String finalDate = "2016-09-16";
+		String initialDate = "2016-07-11";
+		String finalDate = "2016-07-15";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -89,8 +89,8 @@ public class MainSimulation {
 		String[] tempDate;	
 		
 		// set the time to add to query DB on
-		String initialTimeMorning = "07:29:55";
-		String finalTimeMorning = "07:30:00";
+		String initialTimeMorning = "07:31:00";
+		String finalTimeMorning = "07:31:30";
 		String initialTimeAfternoon = "13:59:54";
 		String finalTimeAfternoon = "13:59:59";
 		

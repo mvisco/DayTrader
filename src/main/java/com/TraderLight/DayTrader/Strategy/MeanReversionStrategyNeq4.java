@@ -20,6 +20,7 @@ import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
 
+
 public class MeanReversionStrategyNeq4 extends Strategy{
 	
 	
@@ -30,6 +31,8 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 	States currentState;
 	States desiredState;
 	double possiblePrice;
+	public double firstPrice = 0;
+	public double secondPrice = 0;
 	public double thirdPrice=0;
 	public double fourthPrice = 0;
 	public static final Logger log = Logging.getLogger(true);	
@@ -175,7 +178,8 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 				this.currentState = States.S0;
 				this.desiredState=States.S1;
 				this.StrategyState=States.STemp;
-				this.possiblePrice=currentBid;				
+				this.possiblePrice=currentBid;
+				this.firstPrice = currentBid;
 				account.buy_or_sell(SELL, OPEN, quote, lot, this);
 				
 			// We open a position if the value goes below  the mean by objective_change in automatic fashion 
@@ -190,7 +194,8 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 				this.currentState = States.S0;
 				this.desiredState=States.S2;
 				this.StrategyState = States.STemp;
-				this.possiblePrice=currentAsk;					
+				this.possiblePrice=currentAsk;
+				this.firstPrice = currentAsk;
 				account.buy_or_sell(BUY, OPEN, quote, lot, this);
 				
 		    } else {
@@ -224,7 +229,8 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 					this.currentState = States.S1;
 					this.desiredState=States.S3;
 					this.StrategyState=States.STemp;
-					this.possiblePrice=(this.price+currentBid)/2.0;				
+					this.possiblePrice=(this.price+currentBid)/2.0;	
+					this.secondPrice = currentBid;
 					account.buy_or_sell(SELL, UPDATE, quote, lot, this);
 				}
 				
@@ -260,7 +266,8 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 					this.currentState = States.S2;
 					this.desiredState=States.S4;
 					this.StrategyState = States.STemp;
-					this.possiblePrice=(this.price+currentAsk)/2.0;				
+					this.possiblePrice=(this.price+currentAsk)/2.0;	
+					this.secondPrice = currentAsk;
 					account.buy_or_sell(BUY, UPDATE, quote, lot, this);
 					
 				}				         		    	
@@ -280,7 +287,15 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 				account.buy_or_sell(BUY, CLOSE, quote, lot, this);
 				// We clear the mean at the end of every cycle
 				clearMean();
+			} else if (currentAsk <= (this.secondPrice - profit)) {
+				log.info("State S3 attempting to close one leg  at profit on symbol" + quote.getSymbol());
+				this.currentState = States.S3;
+				this.desiredState=States.S1;
+				this.StrategyState = States.STemp;
+				this.possiblePrice = this.firstPrice;				
+				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
 			} else  if ( (currentAsk > (this.price + objective_change)  )) {
+				log.info("State S3 attempting to sell another lot on symbol" + quote.getSymbol());
 				this.currentState = States.S3;
 				this.desiredState=States.S5;
 				this.StrategyState = States.STemp;	
@@ -303,9 +318,18 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 					this.possiblePrice = 0;	
 					account.buy_or_sell(SELL, CLOSE, quote, lot, this);
 					// We clear the mean at the end of every cycle
-					clearMean();          		    	
-			    }  else if ( (currentBid < this.price-(this.objective_change)) ){
-			    	
+					clearMean();
+			 } else if (currentBid >= (this.secondPrice + profit)) {
+				    log.info("State S4 attempting to close one leg at profit on symbol" + quote.getSymbol());            					
+					this.currentState = States.S4;
+					this.desiredState=States.S2;
+					this.StrategyState = States.STemp;
+					this.possiblePrice = this.firstPrice;
+					account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
+				 
+				 
+			 }  else if ( (currentBid < this.price-(this.objective_change)) ){
+			    	log.info("State S4 attempting to buy another lot on symbol" + quote.getSymbol());
 			    	this.currentState = States.S4;
 					this.desiredState=States.S6;
 					this.StrategyState = States.STemp;
@@ -329,6 +353,14 @@ public class MeanReversionStrategyNeq4 extends Strategy{
         		this.possiblePrice = 0;
         		
         		clearMean();
+        		
+            } else if (currentAsk <= (this.thirdPrice - profit)) {
+				log.info("State S5 attempting to close one leg  at profit on symbol" + quote.getSymbol());
+				this.currentState = States.S5;
+				this.desiredState=States.S3;
+				this.StrategyState = States.STemp;
+				this.possiblePrice=(this.firstPrice + this.secondPrice)/(2.0);
+				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
             
             
             } else  if ( (currentAsk > (this.price + objective_change)  )) {
@@ -363,6 +395,14 @@ public class MeanReversionStrategyNeq4 extends Strategy{
            		account.buy_or_sell(SELL, CLOSE, quote, lot, this);
            		clearMean();
 	       
+	        } else if (currentBid >= (this.thirdPrice + profit)) {
+				log.info("State S6 attempting to close one leg  at profit on symbol" + quote.getSymbol());
+				this.currentState = States.S6;
+				this.desiredState=States.S4;
+				this.StrategyState = States.STemp;
+				this.possiblePrice=(this.firstPrice + this.secondPrice)/(2.0);
+				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");		
+           
 	       
 	       } else if ( (currentBid < this.price-(this.objective_change)) ){
 	    	   
@@ -388,19 +428,23 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 			
 		case S7: 
             if ( (currentAsk <= (this.price - profit)  )) {     
-          		log.info("State S7 attempting to close position at profit on symbol" + quote.getSymbol());
-       		//log.info("Thread ID is: " + Thread.currentThread().getId());
-			
-       		this.currentState = States.S7;
-       		this.desiredState=States.S0;
-       		this.StrategyState = States.STemp;
-       		this.possiblePrice = 0;
-       		account.buy_or_sell(BUY, CLOSE, quote, lot, this);
-       		clearMean();
+          		log.info("State S7 attempting to close position at profit on symbol" + quote.getSymbol());		
+          		this.currentState = States.S7;
+          		this.desiredState=States.S0;
+          		this.StrategyState = States.STemp;
+          		this.possiblePrice = 0;
+          		account.buy_or_sell(BUY, CLOSE, quote, lot, this);
+          		clearMean();
            
            
-           } 
-			
+           } else if (currentAsk <= (this.fourthPrice - profit)) {
+				log.info("State S7 attempting to close one leg  at profit on symbol" + quote.getSymbol());
+				this.currentState = States.S7;
+				this.desiredState=States.S5;
+				this.StrategyState = States.STemp;
+				this.possiblePrice=( (this.firstPrice + this.secondPrice)/(2.0) + this.thirdPrice)/2.0;
+				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
+           }
 			
 			break;		
 			
@@ -417,7 +461,14 @@ public class MeanReversionStrategyNeq4 extends Strategy{
            		this.possiblePrice = 0;	
            		account.buy_or_sell(SELL, CLOSE, quote, lot, this);
            		clearMean();
-	        }
+	        }  else if (currentBid >= (this.fourthPrice + profit)) {
+				log.info("State S8 attempting to close one leg  at profit on symbol" + quote.getSymbol());
+				this.currentState = States.S8;
+				this.desiredState=States.S6;
+				this.StrategyState = States.STemp;
+				this.possiblePrice=( (this.firstPrice + this.secondPrice)/(2.0) + this.thirdPrice)/2.0;
+				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
+           }
 			
 			
 			break;
@@ -502,6 +553,72 @@ public class MeanReversionStrategyNeq4 extends Strategy{
     	}  	
     	
     }
+    
+    @Override
+    public void strategyCallbackOneLeg(boolean success, String symbol, String buy_sell, String price) {
+    	
+    	if (success) {	
+    		if ( (this.currentState == States.S1) || (this.currentState == States.S2) ) {
+    			this.StrategyState = this.desiredState;
+    			this.price=this.possiblePrice;
+    			this.currentState=this.desiredState;
+    			this.firstPrice=0;
+
+    		} else if ( (this.currentState == States.S3) || (this.currentState == States.S4)) {
+
+    			// we have two positions this is the first one we sold    				
+    			this.StrategyState = this.desiredState;
+    			this.price=this.possiblePrice;
+    			this.secondPrice=0;
+    			if ((this.currentState == States.S3)) {
+    				this.currentState=States.S1;   					
+    			}
+    			if ((this.currentState == States.S4)) {
+    				this.currentState=States.S2;
+    			}
+
+    		} else if ( (this.currentState == States.S5) || (this.currentState == States.S6) ) {
+
+    			// We have 3 positions open this is the first one we sold
+    			this.StrategyState = this.desiredState;
+    			this.price=this.possiblePrice;
+    			this.thirdPrice=0;    				
+    			if ((this.currentState == States.S5)) {
+    				this.currentState=States.S3;
+
+    			}
+    			if ((this.currentState == States.S6)) {
+    				this.currentState=States.S4;
+
+    			}
+
+    		}  else if ( (this.currentState == States.S7) || (this.currentState == States.S8) ) {
+
+    			// We have 4 positions open this is the first one we sold
+    			this.StrategyState = this.desiredState;
+    			this.price=this.possiblePrice;
+    			this.thirdPrice=0;    				
+    			if ((this.currentState == States.S7)) {
+    				this.currentState=States.S5;
+
+    			}
+    			if ((this.currentState == States.S8)) {
+    				this.currentState=States.S6;
+
+    			}
+
+    		}
+
+
+
+    } else {
+		log.info("Order was NOT filled. Moving strategy BACK to State" + this.currentState + " for symbol " + symbol);
+		this.price=0;
+		this.StrategyState= this.currentState;
+		this.desiredState=this.currentState;
+	} 
+  }
+    
     
     @Override
     public void updateStrategyParameters(double change, double profit, double loss,int lot, boolean tradeable, boolean closePosition, 
