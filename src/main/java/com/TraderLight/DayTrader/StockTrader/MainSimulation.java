@@ -63,8 +63,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-5-01";
-		String finalDate = "2016-08-31";
+		String initialDate = "2016-1-08";
+		String finalDate = "2016-04-30";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -159,7 +159,7 @@ public class MainSimulation {
         capital_available=sysconfig.capital;
         maxNumberOfPositions=sysconfig.maxNumberOfPositions;
         
-        Stock.populateStock("stock.xml");
+        Stock.populateStock("QQQ.xml");
         List<Stock> listOfStocks = Stock.getListOfStocks();
 				
 		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock, true);
@@ -231,7 +231,7 @@ public class MainSimulation {
 		   
 		   } else if ( stock.getStrategyID() == 6) {
 				Strategy strategy = new HighLowStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector(), stock.trend);
 				stock.setStrategy(strategy);
 		   
 		   } else {

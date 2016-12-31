@@ -48,6 +48,7 @@ public class Stock {
 	double change;
 	double profit;
 	double loss;
+	double trend;
 	int lot;
 	boolean closePosition;
 	boolean openLongPosition;
@@ -268,6 +269,15 @@ public class Stock {
 		        	if (event.asStartElement().getName().getLocalPart().equals("loss")) {
 		        		event = eventReader.nextEvent();
 		                stock.loss = Double.valueOf(event.asCharacters().getData());
+		                continue;
+		        	
+		             }
+			     }
+		        
+		        if (event.isStartElement()) {
+		        	if (event.asStartElement().getName().getLocalPart().equals("trend")) {
+		        		event = eventReader.nextEvent();
+		                stock.trend = Double.valueOf(event.asCharacters().getData());
 		                continue;
 		        	
 		             }
