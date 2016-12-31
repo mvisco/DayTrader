@@ -21,6 +21,7 @@ import com.TraderLight.DayTrader.AccountMgmt.OptionPosition;
 import com.TraderLight.DayTrader.AccountMgmt.StockPosition;
 import com.TraderLight.DayTrader.MarketDataProvider.GetFromStorageJDBC;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
+import com.TraderLight.DayTrader.Strategy.HighLowStrategy;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategyNeq2;
@@ -62,8 +63,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-07-11";
-		String finalDate = "2016-07-15";
+		String initialDate = "2016-5-01";
+		String finalDate = "2016-08-31";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -228,6 +229,10 @@ public class MainSimulation {
 						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);
 		   
+		   } else if ( stock.getStrategyID() == 6) {
+				Strategy strategy = new HighLowStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
+				stock.setStrategy(strategy);
 		   
 		   } else {
 			   log.info("Stategy ID not supported, assigning manual as default");
@@ -274,9 +279,9 @@ public class MainSimulation {
 			    List<Level1Quote> l = new ArrayList<Level1Quote>();
 			    
 			    // update the strategies with previous close for the day of the simulation
-			    for ( Stock s : listOfStocks) {
-			    	s.strategy.getPreviousClose(dates.get(j));
-			    }
+			   // for ( Stock s : listOfStocks) {
+			   // 	s.strategy.getPreviousClose(dates.get(j));
+			   // }
 			    
 			    l=getRecord.getLevel1QuoteList(con, "ALL", morningOpenIndex, closeOpeningIndex);
 				  

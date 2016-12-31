@@ -16,7 +16,7 @@
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>5</strategy>
     <impVol>0.20</impVol>
-    <tradeable>true</tradeable>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
    <symbol>AAPL</symbol>
@@ -34,7 +34,7 @@
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>5</strategy>
     <impVol>0.20</impVol>
-    <tradeable>true</tradeable>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>MSFT</symbol>
@@ -52,7 +52,7 @@
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>5</strategy>
     <impVol>0.20</impVol>
-    <tradeable>true</tradeable>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>INTC</symbol>
@@ -92,10 +92,10 @@
   </stock>
   <stock>
     <symbol>QQQ</symbol>
-    <change>0.5</change>
-    <profit>0.3</profit>
-    <loss>0.3</loss>
-    <lot>3000</lot> 
+    <change>0.01</change>
+    <profit>0.01</profit>
+    <loss>0.01</loss>
+    <lot>10000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -104,9 +104,9 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>5</strategy>
+    <strategy>6</strategy>
     <impVol>0.20</impVol>
-    <tradeable>false</tradeable>
+    <tradeable>true</tradeable>
   </stock>
   <stock>
     <symbol>AMZN</symbol>
@@ -124,7 +124,7 @@
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>5</strategy>
     <impVol>0.20</impVol>
-    <tradeable>true</tradeable>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>NFLX</symbol>
@@ -160,7 +160,7 @@
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>5</strategy>
     <impVol>0.20</impVol>
-    <tradeable>true</tradeable>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>SPY</symbol>
