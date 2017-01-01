@@ -13,6 +13,7 @@ whoami
 bash Anaconda-2.3.0-Linux-x86_64.sh -b /home/vagrant/anaconda
 echo "PATH=$PATH:/home/vagrant/anaconda/bin" >> .bashrc
 sudo apt-get install -y eclipse
+sudo apt-get install -y python-dev
 EOF
 echo "OUT"
 whoami
