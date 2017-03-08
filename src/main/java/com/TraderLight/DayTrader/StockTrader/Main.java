@@ -227,7 +227,7 @@ public class Main {
 				
 				// start getting quotes at 7:29 and end at 14:01
 				if (!sysconfig.useDB) { 
-				    quotes = MarketDataProvider.QTMarketDataProvider();
+				    quotes = MarketDataProvider.SEMarketDataProvider();
 				    if (quotes != null) {
 					 // send quote to strategy
 					    for (String quote : quotes) {

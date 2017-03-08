@@ -77,7 +77,37 @@ public class MarketDataProvider {
 			log.error("Exception Thrown: " + e);
 		 }
 		 return null;
-   }		
+   }
+	
+	
+	public static String[]  SEMarketDataProvider() {
+	    
+		try {
+		    DefaultHttpClient httpclient = new DefaultHttpClient();
+		    // Create a method instance.
+		    
+		    HttpGet httpGet= new HttpGet("http://127.0.0.1:9000/");
+		    HttpResponse response1 = httpclient.execute(httpGet);
+		    HttpEntity entity = response1.getEntity();
+		
+		    if (entity != null) {
+		        
+		        //log.info("Length of the Entity is: " + len);
+		        String totalQuotes = EntityUtils.toString(entity);
+		        // String[] Quotes = totalQuotes.split("\r\n");
+		        //log.info("Quotes are " + totalQuotes);
+		        //String[] Quotes = totalQuotes.split(System.getProperty(";"));
+		        String[] quotes = totalQuotes.split(";");		        		      
+		        EntityUtils.consume(entity);
+		        httpclient.getConnectionManager().shutdown();
+		        return quotes;
+	        } 
+		 } catch(Exception e) {
+			// Log the exception thrown  
+			log.error("Exception Thrown: " + e);
+		 }
+		 return null;
+   }
 
 	
 }

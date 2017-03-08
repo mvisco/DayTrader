@@ -18,6 +18,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 import org.apache.log4j.Logger;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
 import com.TraderLight.DayTrader.StockTrader.Logging;
 
 /**
@@ -53,7 +56,7 @@ public class Level1Quote {
     
     public Level1Quote() { } ;
 
-    public Level1Quote (String quote) {
+    public Level1Quote (String quote, boolean dbstore) {
     	String day = null;
         String time = null; 
     	// log.info("Entering : " + function);
@@ -127,6 +130,8 @@ public class Level1Quote {
     	this.currentDateTime = rightNowTime;
     	//log.info("currentDateTime is: " + currentDateTime);
     }
+    
+    
       
     public String getSymbol() {return symbol;}
     public double getLast() {return last;}
@@ -147,5 +152,49 @@ public class Level1Quote {
     public double getHigh52week() {return high52week;}
     public Date getLastDateTime() {return lastDateTime;}
     public Date getCurrentDateTime() {return currentDateTime;}
+    public void setSymbol(String symbol) {this.symbol=symbol;}
+    public void setLast(double last) {this.last=last;}
+    public void setBid(double bid) {this.bid=bid;}
+    public void setAsk(double ask) {this.ask= ask;}
+    public void setDate(Date date) {this.currentDateTime= date;}
+    
+    
+    
+    public Level1Quote(String quote) {
+    	JSONParser parser = new JSONParser();
+    	
+    	try {
+    		JSONObject jsonObject = (JSONObject) parser.parse(quote);
+    		this.symbol = (String) jsonObject.get("symbol");
+    		//log.info("Symbol is " + symbol);
+    		this.ask = (double) jsonObject.get("ask");
+    		this.bid = (double) jsonObject.get("bid");
+    		this.volume = (int)(long)jsonObject.get("volume");
+    		this.last =  (double) jsonObject.get("last");
+    		this.change = (double) jsonObject.get("change");
+    		this.high = (double) jsonObject.get("high");
+    		this.low = (double) jsonObject.get("low");
+    		String currentDateTime = (String) jsonObject.get("currentdatetime");
+    		Date sqlDayTime = null;
+    		DateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy" );		
+        	try {
+    			sqlDayTime = sdf.parse(currentDateTime);
+    			this.lastDateTime = sqlDayTime;
+    		} catch (ParseException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
+        	Calendar rightNow = Calendar.getInstance();
+        	Date rightNowTime = rightNow.getTime();  	
+        	this.currentDateTime = rightNowTime;
+    		//setIsin(this.symbol);
+    		
+		} catch (org.json.simple.parser.ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	
+    }
 
 }
