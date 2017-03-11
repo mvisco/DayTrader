@@ -15,6 +15,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -32,6 +34,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>1</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -49,6 +53,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -66,6 +72,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -83,6 +91,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -100,6 +110,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -117,6 +129,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -134,6 +148,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
    <stock>
@@ -151,6 +167,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -168,6 +186,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>false</tradeable>
   </stock>  
   <stock>
@@ -185,6 +205,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
    </stock> 
    <stock>
@@ -202,6 +224,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>  
     <stock>
@@ -219,6 +243,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -236,6 +262,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock> 
   <stock>
@@ -253,6 +281,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -270,6 +300,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
+    <price>850</price>
+    <strike_increment>2.50</strike_increment>
     <tradeable>true</tradeable>
   </stock>
 </config>

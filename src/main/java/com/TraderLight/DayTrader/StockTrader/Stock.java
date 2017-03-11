@@ -16,8 +16,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -56,11 +60,15 @@ public class Stock {
 	double priceForShortPosition;
 	boolean tradeable;
 	int strategyID;
+	double price;
+	double strike_increment;
 	static long modifiedTime=0L;
 	Strategy strategy;
-	List<Integer> volumeVector;	
+	List<Integer> volumeVector;
 	static List<Stock> listOfStocks = new ArrayList<Stock>(); // contains all the stocks of interest for the trading session
-    
+    List<BigDecimal> strikes = new ArrayList<BigDecimal>();
+    List<String> expirations = new ArrayList<String>();
+	
 	private Stock() {
 		
 	}
@@ -347,6 +355,24 @@ public class Stock {
 			     }
 		        
 		        if (event.isStartElement()) {
+		        	if (event.asStartElement().getName().getLocalPart().equals("price")) {
+		        		event = eventReader.nextEvent();
+		                stock.price = Double.valueOf(event.asCharacters().getData());
+		                continue;
+		        	
+		             }
+			     }
+		        
+		        if (event.isStartElement()) {
+		        	if (event.asStartElement().getName().getLocalPart().equals("strike_increment")) {
+		        		event = eventReader.nextEvent();
+		                stock.strike_increment = Double.valueOf(event.asCharacters().getData());
+		                continue;
+		        	
+		             }
+			     }
+		        
+		        if (event.isStartElement()) {
 		        	if (event.asStartElement().getName().getLocalPart().equals("tradeable")) {
 		        		event = eventReader.nextEvent();
 		                stock.tradeable = Boolean.parseBoolean(event.asCharacters().getData());
@@ -544,6 +570,24 @@ public class Stock {
 				     }
 			        
 			        if (event.isStartElement()) {
+			        	if (event.asStartElement().getName().getLocalPart().equals("price")) {
+			        		event = eventReader.nextEvent();
+			                modifiedStock.price = Double.valueOf(event.asCharacters().getData());
+			                continue;
+			        	
+			             }
+				     }
+			        
+			        if (event.isStartElement()) {
+			        	if (event.asStartElement().getName().getLocalPart().equals("strike_increment")) {
+			        		event = eventReader.nextEvent();
+			                modifiedStock.strike_increment = Double.valueOf(event.asCharacters().getData());
+			                continue;
+			        	
+			             }
+				     }
+			        
+			        if (event.isStartElement()) {
 			        	if (event.asStartElement().getName().getLocalPart().equals("tradeable")) {
 			        		event = eventReader.nextEvent();
 			        		modifiedStock.tradeable = Boolean.parseBoolean(event.asCharacters().getData());			               
@@ -571,6 +615,56 @@ public class Stock {
 		
 			return;
 		}
+	
+	    public void createStrikes() {
+		
+	    	final int STRIKESNUMBER = 10; // we will have 21 strikes
+
+	    	BigDecimal priceBD = new BigDecimal(String.valueOf(this.price));
+	    	BigDecimal increment = new BigDecimal(String.valueOf(this.strike_increment));
+	    	RoundingMode rm1;
+	    	rm1 = RoundingMode.valueOf("HALF_DOWN");		
+	    	BigDecimal price_new = priceBD.setScale(0, rm1);
+	    	
+	    	if (this.strike_increment == 2.5) {
+	    		//for options that have a 2.5 increment we have to start from a multiple of 5. For example if we GOOGL price 
+	    		// set at 852 we will start from 850 to build the lost of strikes. For other options we can start anywhere on the 
+	    		// int version of price for ex. AAPL at 135.33 we will start at 135 and increment either by 1 or by 0.5
+	    		price_new = price_new.subtract(price_new.remainder(new BigDecimal("5.0")));
+	    	}
+	    	
+	    	for (int i = -STRIKESNUMBER; i <=STRIKESNUMBER; i++) {
+				strikes.add(price_new.add(increment.multiply(new BigDecimal(i))));
+			}
+		
+	    }
+	
+ 
+
+		public void createExpirations() {
+        	
+        	final int EXPIRATIONSNUMBER = 10; // we will have 11 expiration dates
+        	SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        	Calendar rightnow = Calendar.getInstance();
+        	//start from  the first day of current week
+        	rightnow.add(Calendar.DAY_OF_WEEK, rightnow.getFirstDayOfWeek()-rightnow.get(Calendar.DAY_OF_WEEK));
+        	// get the friday of this week
+        	rightnow.add(Calendar.DAY_OF_MONTH, 5);
+        	for (int i = 0; i <= EXPIRATIONSNUMBER; i++) {
+        		// add this Friday and next 10 Fridays to the list
+        		rightnow.add(Calendar.DAY_OF_MONTH, i*7);
+        		expirations.add(sdf.format(rightnow.getTime()));
+        	}
+	    }
+
+		public List<BigDecimal> getStrikes() {
+			return strikes;
+		}
+		
+	    public List<String> getExpirations() {
+				return expirations;
+		}
+	
 	}
 	
 
