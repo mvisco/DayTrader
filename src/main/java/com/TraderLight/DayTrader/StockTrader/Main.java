@@ -24,6 +24,7 @@ import com.TraderLight.DayTrader.AccountMgmt.AccountMgr;
 import com.TraderLight.DayTrader.MarketDataProvider.GetFromStorageJDBC;
 import com.TraderLight.DayTrader.MarketDataProvider.MarketDataProvider;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
+import com.TraderLight.DayTrader.Strategy.GammaScalping;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy;
 import com.TraderLight.DayTrader.Strategy.Strategy;
@@ -69,8 +70,12 @@ public class Main {
         
         Stock.populateStock("stock.xml");
         List<Stock> listOfStocks = Stock.getListOfStocks();
+        for (Stock stock : listOfStocks) {
+        	stock.createStrikes();
+        	stock.createExpirations();
+        }
 				
-		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock);
+		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock, listOfStocks);
 		
         // populate broker and inform AccountMgr
         broker = args[0];
@@ -103,22 +108,30 @@ public class Main {
 			
 			if (stock.getStrategyID() == 0) {
 				Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-					stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+					stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(),stock.getVolumeVector());
 				stock.setStrategy(strategy);				
 				
 			} else if ( stock.getStrategyID() == 1) {
 				Strategy strategy = new MeanReversionStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);
 					
 		   } else if ( stock.getStrategyID() == 2) {
 			   Strategy strategy = new TrendStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 			   stock.setStrategy(strategy);
+			   
+		   } else if ( stock.getStrategyID() == 3) {
+			   Strategy strategy = new GammaScalping(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), 
+						stock.getVolumeVector(), stock);
+			   stock.setStrategy(strategy);
+			   
 		   } else {
 			   log.info("Stategy ID not supported, assigning manual as default");
 			   Strategy strategy = new ManualStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
-						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getVolumeVector());
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), 
+						stock.getVolumeVector());
 			   stock.setStrategy(strategy);
 			   
 		   }
@@ -168,14 +181,13 @@ public class Main {
 						
 			if (!loginSent) {
 				
-				//Login only if we are not simulating 
-				if ((!sysconfig.mock)) {	
-			   	  if (broker.contentEquals("TM")  ) {			    	
-				    
+				
+				if (broker.contentEquals("TM")  ) {			    	
+
 					// Login into TM
 					LoginTradeMonster loginTM = new LoginTradeMonster(sysconfig.OHLogin, sysconfig.OHPassword, 
-							                                          sysconfig.OHAuthURL, sysconfig.OHSourceApp);
-									
+							sysconfig.OHAuthURL, sysconfig.OHSourceApp);
+
 					try {
 						loginTM.login();
 						loginSent=true;	
@@ -187,15 +199,15 @@ public class Main {
 						log.info("Cannot login into OH");
 						e.printStackTrace();
 					}
-					
-			      } else {
-			    	log.info("Wrong broker received that is not supported ..... quitting");
-			    	System.exit(0);		
-			      }				 
-				} 
-			}
+
+				} else {
+					log.info("Wrong broker received that is not supported ..... quitting");
+					System.exit(0);		
+				}				 
+			} 
+			
 						
-			if ( (loginSent) && (broker.contentEquals("TM")) && (!sysconfig.mock) ) {
+			if ( (loginSent) && (broker.contentEquals("TM")) ) {
 				// for TM we do not have keep alive just request a quote every 10 minutes
 				if (System.currentTimeMillis() > (timeSentLogin+(60000*10)) ) {
 					timeSentLogin = System.currentTimeMillis();

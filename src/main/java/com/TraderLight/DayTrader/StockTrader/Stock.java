@@ -62,6 +62,7 @@ public class Stock {
 	int strategyID;
 	double price;
 	double strike_increment;
+	double impVol;
 	static long modifiedTime=0L;
 	Strategy strategy;
 	List<Integer> volumeVector;
@@ -373,6 +374,15 @@ public class Stock {
 			     }
 		        
 		        if (event.isStartElement()) {
+		        	if (event.asStartElement().getName().getLocalPart().equals("impVol")) {
+		        		event = eventReader.nextEvent();
+		                stock.impVol = Double.valueOf(event.asCharacters().getData());
+		                continue;
+		        	
+		             }
+			     }
+		        
+		        if (event.isStartElement()) {
 		        	if (event.asStartElement().getName().getLocalPart().equals("tradeable")) {
 		        		event = eventReader.nextEvent();
 		                stock.tradeable = Boolean.parseBoolean(event.asCharacters().getData());
@@ -588,6 +598,15 @@ public class Stock {
 				     }
 			        
 			        if (event.isStartElement()) {
+			        	if (event.asStartElement().getName().getLocalPart().equals("impVol")) {
+			        		event = eventReader.nextEvent();
+			                modifiedStock.impVol = Double.valueOf(event.asCharacters().getData());
+			                continue;
+			        	
+			             }
+				     }
+			        
+			        if (event.isStartElement()) {
 			        	if (event.asStartElement().getName().getLocalPart().equals("tradeable")) {
 			        		event = eventReader.nextEvent();
 			        		modifiedStock.tradeable = Boolean.parseBoolean(event.asCharacters().getData());			               
@@ -616,7 +635,15 @@ public class Stock {
 			return;
 		}
 	
-	    public void createStrikes() {
+    public double getImpVol() {
+		return impVol;
+	}
+
+	public void setImpVol(double impVol) {
+		this.impVol = impVol;
+	}
+
+		public void createStrikes() {
 		
 	    	final int STRIKESNUMBER = 10; // we will have 21 strikes
 

@@ -1,6 +1,18 @@
+/*
+ * Copyright 2016 Mario Visco, TraderLight LLC.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and limitations under the License.
+ **/
+
 package com.TraderLight.DayTrader.Strategy;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -12,6 +24,7 @@ import org.apache.log4j.Logger;
 import com.TraderLight.DayTrader.AccountMgmt.AccountMgr;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
+import com.TraderLight.DayTrader.StockTrader.Stock;
 
 
 
@@ -37,16 +50,17 @@ public class GammaScalping extends Strategy{
 	double shortPositionPrice;
 	double longPositionPrice;
 	int count;
+	Stock stock;
 	
 	private final String OPEN = "open";
 	private final String CLOSE = "close";
-	//private final String UPDATE = "update";
+	private final String UPDATE = "update";
 	private final String BUY = "buy";
 	private final String SELL = "sell";
 	
 	
 	public GammaScalping(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
-			double profit, double impVol, List<Integer> v) {
+			double profit, double impVol, List<Integer> v, Stock stock) {
 		
 		super(symbol, symbol_lot, change, isTradeable, account, loss, profit, impVol, v);
 		this.StrategyState = States.SInit0;
@@ -61,6 +75,7 @@ public class GammaScalping extends Strategy{
 		this.longPositionPrice = Double.MIN_VALUE;
 		this.account = account;
 		this.count = 0;
+		this.stock = stock;
 	}
 	
 	@Override
@@ -145,14 +160,18 @@ public class GammaScalping extends Strategy{
 			log.info("Not time yet to trade, time is: " + quote.getCurrentDateTime());
 			return;
 		}	
-			
-		//int  price1 = (int)(currentBid *10);
+
     	int k1 = 1;
+    	BigDecimal bidD = new BigDecimal(String.valueOf(currentBid));
+    	RoundingMode rm1;
+    	rm1 = RoundingMode.valueOf("HALF_DOWN");		
+    	BigDecimal new_bid = bidD.setScale(1, rm1);
+    	for ( BigDecimal bd : stock.getStrikes()) {
+    		if (bd.compareTo(new_bid) == 0 ) {
+    			k1 =0;
+    		}
+    	}
     	
-    	double q = currentBid - (int)currentBid;
-        if ( (q == 0.0)) {
-        	 k1 = 0;
-        }
 		switch (StrategyState) {
 		
 		case SInit0:
@@ -165,7 +184,7 @@ public class GammaScalping extends Strategy{
 					this.desiredState=States.SInit1;
 					this.StrategyState=States.STemp;
 					this.possiblePrice=currentPrice;				
-					account.buy_or_sell(SELL, OPEN, quote, lot, this);
+					account.option_buy_or_sell(BUY, OPEN, quote, lot, "P", this);
 					
 					
 				
@@ -181,9 +200,8 @@ public class GammaScalping extends Strategy{
 			log.info("State SInit1):  attempting to buy one lot of calls for symbol: " + quote.getSymbol() + " at bid " + currentBid);
 			this.currentState = States.SInit1;
 			this.desiredState=States.S0;
-			this.StrategyState=States.STemp;
-			//this.possiblePrice=currentPrice;		
-			account.buy_or_sell(BUY, OPEN, quote, lot, this);
+			this.StrategyState=States.STemp;		
+			account.option_buy_or_sell(BUY, OPEN, quote, lot, "C", this);
 		
 		case S0:
 			
@@ -194,19 +212,21 @@ public class GammaScalping extends Strategy{
 			int quantity = (lot*2)/10;
 			 //quantity = (lot)/2;
 			 
-			if (delta <= -2000) {
+			if (delta <= -(0.2*lot)) {
 				// sell 20% of puts 
 				this.currentState = States.S0;
 				this.desiredState=States.S1;
 				this.StrategyState=States.STemp;
-				account.sellDeltaAdjustment(quote, quote.getSymbol(), this, SELL, quantity, "P");
+				//account.sellDeltaAdjustment(quote, quote.getSymbol(), this, SELL, quantity, "P");
+				account.deltaAdjustment(SELL, UPDATE, quote, quantity, "P", this);
 				
-			} else if (delta >= 2000) {
+			} else if (delta >= (0.2*lot)) {
 				// sell 20% of the calls 
 				this.currentState = States.S0;
 				this.desiredState=States.S2;
 				this.StrategyState=States.STemp;
-				account.sellDeltaAdjustment(quote, quote.getSymbol(), this, SELL, quantity, "C");
+				//account.sellDeltaAdjustment(quote, quote.getSymbol(), this, SELL, quantity, "C");
+				account.deltaAdjustment(SELL, UPDATE, quote, quantity, "C", this);
 				
 				
 			} else {
@@ -218,29 +238,33 @@ public class GammaScalping extends Strategy{
 
 		case S1: 
 			
-			// We have more puts than calls
+			// We have more calls than puts
 			
 			 delta = account.calculatePortfolioDelta(quote, this);
 			 
 			 quantity = (lot*2)/10;
 			// quantity = (lot)/2;
-			if (delta <= -2000) {
+			 
+			if (delta <= -(0.2*lot)) {
 				// sell 20% of puts 
 				this.currentState = States.S1;
 				this.desiredState=States.S1;
 				this.StrategyState=States.STemp;
-				account.sellDeltaAdjustment(quote, quote.getSymbol(), this, SELL, quantity, "P");
+				//account.sellDeltaAdjustment(quote, quote.getSymbol(), this, SELL, quantity, "P");
+				account.deltaAdjustment(SELL, UPDATE, quote, quantity, "P", this);
 				
-			} else if (delta >= 2000) {
+				
+			} else if (delta >= (0.2*lot)) {
 				// buy 20% of the puts 
 				this.currentState = States.S0;
-				if ( (account.getQuantity(quote, "P") - account.getQuantity(quote, "C")) > 2000 ) {
+				if ( (account.getQuantity(quote, "C") - account.getQuantity(quote, "P")) > 0.2*lot ) {
 				     this.desiredState=States.S1;
 				} else {
 					this.desiredState=States.S0;
 				}
 				this.StrategyState=States.STemp;
-				account.buyDeltaAdjustment(quote, quote.getSymbol(), this, BUY, quantity, "P");
+				//account.buyDeltaAdjustment(quote, quote.getSymbol(), this, BUY, quantity, "P");
+				account.deltaAdjustment(BUY, UPDATE, quote, quantity, "P", this);
 				
 				
 			} else {
@@ -252,12 +276,12 @@ public class GammaScalping extends Strategy{
 
 		case S2:
 			
-			// we have more calls than puts
+			// we have more puts than calls
 			 delta = account.calculatePortfolioDelta(quote, this);
 			 
 			 quantity = (lot*2)/10;
 			// quantity = (lot)/2;
-			if (delta <= -2000) {
+			 if (delta <= -(0.2*lot)) {
 				// buy  20% of calls 
 				this.currentState = States.S2;
 				if ( (account.getQuantity(quote, "C") - account.getQuantity(quote, "P")) > 2000 ) {
@@ -267,14 +291,16 @@ public class GammaScalping extends Strategy{
 				}
 				
 				this.StrategyState=States.STemp;
-				account.buyDeltaAdjustment(quote, quote.getSymbol(), this, BUY, quantity, "C");
+				//account.buyDeltaAdjustment(quote, quote.getSymbol(), this, BUY, quantity, "C");
+				account.deltaAdjustment(BUY, UPDATE, quote, quantity, "C", this);
 				
-			} else if (delta >= 2000) {
+			 } else if (delta >= (0.2*lot)) {
 				// sell 20% of the calls 
 				this.currentState = States.S2;
 				this.desiredState=States.S2;
 				this.StrategyState=States.STemp;
-				account.sellDeltaAdjustment(quote, quote.getSymbol(), this, SELL, quantity, "C");
+				//account.sellDeltaAdjustment(quote, quote.getSymbol(), this, SELL, quantity, "C");
+				account.deltaAdjustment(SELL, UPDATE, quote, quantity, "P", this);
 				
 				
 			} else {
@@ -301,23 +327,16 @@ public class GammaScalping extends Strategy{
 	public void closePositions(String symbol) {
 	    
 		switch (StrategyState) {
-
+		   	
 		    case S1:	
-		    	log.info("State S1 attempting to close position on symbol" + symbol);
-		    	this.desiredState = States.S0;
-			    this.currentState= StrategyState;
-		    	this.StrategyState=States.STemp;
-		    	account.buy_or_sell(BUY, CLOSE, lastQuote, lot, this);
-		    	clearMean();
-		    	break;
-		    	
 		    case S2:
 		    case S0:
-		    	log.info("State S2 attempting to close position on symbol" + symbol);
+		    case SInit1:
+		    	log.info(" Attempting to close position on symbol" + symbol);
 		    	this.desiredState = States.S0;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
-		    	account.buy_or_sell(SELL, CLOSE, lastQuote, lot, this);
+		    	account.option_buy_or_sell(SELL, CLOSE, lastQuote, lot, "C", this);
 		    	clearMean();
 		    	break;
 

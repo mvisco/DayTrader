@@ -44,10 +44,11 @@ public abstract class  Strategy {
 	List<Level1Quote> rollingWindow;
 	int sizeOfTheList;
 	Level1Quote lastQuote;
+	double impVol;
 	int minute_mean_position = 0;
 	
 	public Strategy(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
-			double profit, List<Integer> v) {
+			double profit, double impVol, List<Integer> v) {
 		
 		this.symbol = symbol;
 		this.lot = symbol_lot;
@@ -60,6 +61,7 @@ public abstract class  Strategy {
 		this.averageVolume = v;
 		this.stats = new DescriptiveStatistics();
 		this.lastQuote = new Level1Quote();
+		this.impVol = impVol;
 		
 	}
 	
@@ -130,7 +132,17 @@ public abstract class  Strategy {
     	this.isTradeable=tradeable;
     	return;
     }
+    
+    public void setImpVol(double impVol) {
+    	this.impVol=impVol;
+    	return;
+    }
 	
+    public double getImpVol() {
+    	
+    	return impVol;
+    }
+    
     public void dumpStats(String symbol) {
     	
     	log.info("---------------------------------------------------------");

@@ -5,7 +5,7 @@
     <change>6</change>
     <profit>4</profit>
     <loss>3</loss>
-    <lot>200</lot> 
+    <lot>1000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -14,9 +14,10 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>0</strategy>
+    <strategy>3</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
+    <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -24,7 +25,7 @@
     <change>1</change>
     <profit>0.4</profit>
     <loss>0.2</loss>
-    <lot>100</lot> 
+    <lot>10000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -33,9 +34,10 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>1</strategy>
-    <price>850</price>
-    <strike_increment>2.50</strike_increment>
+    <strategy>3</strategy>
+    <price>130</price>
+    <strike_increment>1</strike_increment>
+    <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -43,7 +45,7 @@
     <change>1</change>
     <profit>0.4</profit>
     <loss>0.2</loss>
-    <lot>1000</lot> 
+    <lot>10000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -52,9 +54,10 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>0</strategy>
-    <price>850</price>
-    <strike_increment>2.50</strike_increment>
+    <strategy>3</strategy>
+    <price>60</price>
+    <strike_increment>0.5</strike_increment>
+    <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -62,7 +65,7 @@
     <change>1</change>
     <profit>0.4</profit>
     <loss>0.2</loss>
-    <lot>1000</lot> 
+    <lot>10000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -71,9 +74,10 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>0</strategy>
-    <price>850</price>
-    <strike_increment>2.50</strike_increment>
+    <strategy>3</strategy>
+    <price>35</price>
+    <strike_increment>0.5</strike_increment>
+    <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -81,7 +85,7 @@
     <change>1</change>
     <profit>0.4</profit>
     <loss>0.2</loss>
-    <lot>1000</lot> 
+    <lot>10000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -91,8 +95,9 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>0</strategy>
-    <price>850</price>
-    <strike_increment>2.50</strike_increment>
+    <price>34</price>
+    <strike_increment>0.50</strike_increment>
+    <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -100,7 +105,7 @@
     <change>1</change>
     <profit>0.4</profit>
     <loss>0.2</loss>
-    <lot>1000</lot> 
+    <lot>10000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -109,9 +114,10 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>0</strategy>
-    <price>850</price>
-    <strike_increment>2.50</strike_increment>
+    <strategy>3</strategy>
+    <price>132</price>
+    <strike_increment>0.50</strike_increment>
+    <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -128,9 +134,10 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>0</strategy>
+    <strategy>3</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
+    <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -150,14 +157,15 @@
     <strategy>0</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
-    <tradeable>true</tradeable>
+    <impVol>0.15</impVol>
+    <tradeable>false</tradeable>
   </stock>
    <stock>
     <symbol>FB</symbol>
     <change>1</change>
     <profit>0.4</profit>
     <loss>0.2</loss>
-    <lot>1000</lot> 
+    <lot>10000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -166,9 +174,10 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>0</strategy>
-    <price>850</price>
-    <strike_increment>2.50</strike_increment>
+    <strategy>3</strategy>
+    <price>140</price>
+    <strike_increment>0.50</strike_increment>
+    <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
   <stock>
@@ -188,6 +197,7 @@
     <strategy>0</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
+    <impVol>0.15</impVol>
     <tradeable>false</tradeable>
   </stock>  
   <stock>
@@ -207,7 +217,8 @@
     <strategy>0</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
-    <tradeable>true</tradeable>
+    <impVol>0.15</impVol>
+    <tradeable>false</tradeable>
    </stock> 
    <stock>
     <symbol>QCOM</symbol>
@@ -226,7 +237,8 @@
     <strategy>0</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
-    <tradeable>true</tradeable>
+    <impVol>0.15</impVol>
+    <tradeable>false</tradeable>
   </stock>  
     <stock>
     <symbol>YHOO</symbol>
@@ -245,7 +257,8 @@
     <strategy>0</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
-    <tradeable>true</tradeable>
+    <impVol>0.15</impVol>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>EBAY</symbol>
@@ -264,7 +277,8 @@
     <strategy>0</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
-    <tradeable>true</tradeable>
+    <impVol>0.15</impVol>
+    <tradeable>false</tradeable>
   </stock> 
   <stock>
     <symbol>IBM</symbol>
@@ -283,7 +297,8 @@
     <strategy>0</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
-    <tradeable>true</tradeable>
+    <impVol>0.15</impVol>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>TXN</symbol>
@@ -302,6 +317,7 @@
     <strategy>0</strategy>
     <price>850</price>
     <strike_increment>2.50</strike_increment>
-    <tradeable>true</tradeable>
+    <impVol>0.15</impVol>
+    <tradeable>false</tradeable>
   </stock>
 </config>

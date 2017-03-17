@@ -11,12 +11,17 @@
 
 package com.TraderLight.DayTrader.AccountMgmt;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 import com.TraderLight.DayTrader.TradeMonster.CancelOrderTM;
 import com.TraderLight.DayTrader.TradeMonster.CreateStockOrderTM;
+import com.TraderLight.DayTrader.TradeMonster.GetQuoteTM;
 import com.TraderLight.DayTrader.TradeMonster.RequestOrderStatusTM;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 import com.TraderLight.DayTrader.Strategy.Strategy;
+
 
 /**
  *  This class manages a single order. It gets called from  AccountMgr and executes in its own thread.
@@ -55,6 +60,8 @@ public class GenericOrderExecutorTM implements Runnable {
 	double shortStrike=0;
 	double longStrike = 0;
 	boolean call_put=false;
+	boolean mock = true;
+	boolean trade_option = false;
 	String spread_price = "";
 	String underlying_price = "";
 	boolean stock_trading = false;
@@ -77,13 +84,35 @@ public class GenericOrderExecutorTM implements Runnable {
 		this.strategy=strategy;	
 		
 	}
+	
+	public GenericOrderExecutorTM(String buy_sell, String open_close_update, String optionSymbol, String symbol, String price, int lot, AccountMgr account, 
+			Strategy strategy, boolean mock, boolean trade_option) {
+		//  constructor for options
+		this.stock_trading=false;
+		this.buy_sell = buy_sell;
+		this.open_close_update = open_close_update;
+		this.optionSymbol = optionSymbol;
+		this.symbol = symbol;
+		this.stockPrice = price;
+		this.quantity= Integer.toString(lot); // We will use this parameter to return the number of options (for ex. 100, 200 etc) as a string in callbacks
+		this.lot=Integer.toString(lot);
+		this.account = account;
+		this.strategy=strategy;	
+		this.mock = mock;
+		this.trade_option = true;
+	}
 
 	@Override
 	public void run() {
 				
 		log.info("Entering Order Executor TM");
 		log.info("Thread ID is: " + Thread.currentThread().getId());
-		stockTrade();
+		
+		if (!trade_option) {
+		   stockTrade();
+		} else {
+			optionTrade();
+		}
 		return;	
 	}
 	
@@ -307,6 +336,150 @@ public class GenericOrderExecutorTM implements Runnable {
 		
 		
 	}	
+	
+	public void optionTrade() {
+		
+		log.info("Entering optionTrade()");
+		optionSymbolTM = convertOptionSymbol(optionSymbol);
+		
+		// Get the quote now
+        GetQuoteTM optionQuote = new GetQuoteTM();
+		
+		try { 
+			optionQuote.getQuotes(optionSymbolTM,buy,closeTransaction);
+			
+			if (this.buy_sell.contentEquals("buy") ){
+				optionPrice = optionQuote.getAsk();
+			} else {
+				optionPrice = optionQuote.getBid();
+			}
+			
+		} catch (Exception e) {
+			log.info("Something went wrong with getting quote for symbol " + optionSymbolTM);
+			e.printStackTrace();
+			// What's to do here ??  let's just  return failure to the account manager 	
+			account.optionReturnOrder(false,"", "", " ", "", buy_sell, "", strategy );
+			return;
+		}
+		
+		if (String.valueOf(optionPrice).isEmpty()) {
+			// We get here if something went wrong with getting the quote
+			account.optionReturnOrder(false,"", "", " ", "", buy_sell, "", strategy );
+			return;
+		}
+		log.info("Option Price is " + optionPrice);	
+		if (mock) {
+			// do not place order just simulate success			
+			account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy);
+			return;
+		}
+	
+/*
+        String price_type="";
+		price_type="limit";
+		CreateOptionOrderTM order = new CreateOptionOrderTM();		
+		try {
+			order.createOrder(buy,lot,optionSymbolTM,optionPrice,price_type);
+		} catch (Exception e) {
+			log.info("Order could not be created");			
+			e.printStackTrace();
+			// return failure so the strategy will go back to previous state
+			account.returnOrderParameters(false, this.symbol, this.optionSymbol, this.optionPrice, this.quantity, this.buy, this.i, this.strategy, this.leg);
+			return;
+		}
+		String order_id = order.getOrderID();
+		
+		log.info("order_id is " + order_id);
+		
+		
+		if (order_id.contentEquals("")) {
+			// Something went wrong we got an empty string. So return failure to account manager
+			log.info("order_id is an empty string");
+			account.returnOrderParameters(false, this.symbol, this.optionSymbol, this.optionPrice, this.quantity, this.buy, this.i, this.strategy, this.leg);
+			return;
+			
+		}
+		
+		checkOrderCompletion(order_id,5);
+*/		
+	}
+		
+	public String convertOptionSymbol(String acct_mgr_option) {
+		
+		Map<String, String> month_for_call = new HashMap<String,String>();
+		Map<String, String> month_for_put = new HashMap<String,String>();
+		
+		month_for_call.put("01", "A");
+		month_for_call.put("02", "B");
+		month_for_call.put("03", "C");
+		month_for_call.put("04", "D");
+		month_for_call.put("05", "E");
+		month_for_call.put("06", "F");
+		month_for_call.put("07", "G");
+		month_for_call.put("08", "H");
+		month_for_call.put("09", "I");
+		month_for_call.put("10", "J");
+		month_for_call.put("11", "K");
+		month_for_call.put("12", "L");
+		
+		month_for_put.put("01", "M");
+		month_for_put.put("02", "N");
+		month_for_put.put("03", "O");
+		month_for_put.put("04", "P");
+		month_for_put.put("05", "Q");
+		month_for_put.put("06", "R");
+		month_for_put.put("07", "S");
+		month_for_put.put("08", "T");
+		month_for_put.put("09", "U");
+		month_for_put.put("10", "V");
+		month_for_put.put("11", "W");
+		month_for_put.put("12", "X");
+		
+		
+		
+		String[] symbolSplit = acct_mgr_option.split(":");
+		
+		// Get the month from the date
+		String month = symbolSplit[1].substring(4, 6);
+		//log.info("month " + month);
+		
+		if (symbolSplit[3].contentEquals("C")) {
+			month = month_for_call.get(month);
+		} else {
+			month = month_for_put.get(month);
+		}
+		
+		String day = symbolSplit[1].substring(6, 8);
+		String year = symbolSplit[1].substring(2, 4);
+		
+		double price = Double.parseDouble(symbolSplit[2]);
+		
+		boolean add_zero_upfront=false;
+		
+		if (price < 100) {
+			add_zero_upfront = true;
+		}
+		
+		if (price >= 1000) {
+			price = price *100;
+		} else {
+		    price = price *1000;
+		}
+		Long priceL = Math.round(price);
+		String priceS = Long.toString(priceL);
+						
+		if (add_zero_upfront) {
+			StringBuilder str = new StringBuilder(priceS).insert(0, "0");
+			priceS = str.toString();
+		}
+		
+		
+		String optionTM=symbolSplit[0]+month+day+year+"C"+priceS;		
+		log.info("optionTM is " + optionTM);
+		return optionTM;
+		
+	}	
+	
 	
 }
 
