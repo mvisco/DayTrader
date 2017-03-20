@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +51,8 @@ public class AccountMgr {
 	private List<StockPosition> positions;
 	private List<StockPosition> historyPositions;
 	//option objects
-	private Map<String, List<OptionPosition>> optionPositions;
-	private Map<Integer, List<OptionPosition>> dayTrades;		
+	private Map<String, List<OptionPosition>> optionPositions = new HashMap<String, List<OptionPosition>>();
+	private Map<Integer, List<OptionPosition>> dayTrades = new HashMap<Integer, List<OptionPosition>>();		
 	private List<Stock> listOfStocks;	
 	private double tradeCost = 0;
 	private double currentTradeCost=0D;
@@ -748,9 +749,11 @@ public class AccountMgr {
 	    		if (i < stock.getExpirations().size() - expiration_in_weeks_from_now) {
 	    			// get the expiration time by bumping the index based on the passed parameter 
 	    			expiration = stock.getExpirations().get(i+expiration_in_weeks_from_now);
+	    			break;
 	    		} else {
 	    			//get the current one because we could  go out of the array memory if we bump the index
 	    			expiration = stock.getExpirations().get(i);
+	    			break;
 	    		}
 	    	}
 	    }
