@@ -32,6 +32,8 @@ import com.TraderLight.DayTrader.Strategy.TrendStrategy;
 import com.TraderLight.DayTrader.TradeMonster.GetStockQuoteTM;
 import com.TraderLight.DayTrader.TradeMonster.LoginTradeMonster;
 import com.TraderLight.DayTrader.TradeMonster.TMSessionControl;
+import com.TraderLight.DayTrader.Ameritrade.LoginAmeritrade;
+import com.TraderLight.DayTrader.Ameritrade.KeepAliveAmeritrade;
 
 /**
  *  This is the main class.
@@ -45,7 +47,7 @@ public class Main {
 	public static final Logger log = Logging.getLogger(true);
 	public static Level1Quote prevQuote;
 	public static double totalTradeCost=0;
-	private static String broker=""; // The only brokers supported right now is TM
+	private static String broker=""; 
 	public static int maxNumberOfPositions;
 	public static int spreadTrading = 0;  // Default value is that we do not trade spread
 	
@@ -181,8 +183,20 @@ public class Main {
 						
 			if (!loginSent) {
 				
-				
-				if (broker.contentEquals("TM")  ) {			    	
+				if (broker.contentEquals("AMTD")) {
+				    LoginAmeritrade login = new LoginAmeritrade(sysconfig.TDLogin, sysconfig.TDPassword, 
+							sysconfig.TDAuthURL, sysconfig.TDSourceApp);
+				    try {
+					    login.login();
+					   //TODO make login boolean to make sure that we logged in.. look at the result to be OK in login response
+				    } catch (IOException e) {
+					     log.info("login to AMTD failed for some reason... just quit ");
+					     e.printStackTrace();
+					     System.exit(0);
+				    }
+				    loginSent=true;
+				}
+				if (broker.contentEquals("TM")  ) {		    	
 
 					// Login into TM
 					LoginTradeMonster loginTM = new LoginTradeMonster(sysconfig.OHLogin, sysconfig.OHPassword, 
@@ -195,9 +209,10 @@ public class Main {
 						log.info("timeSentLogin is " + timeSentLogin);
 						log.info("logged in TM ,  session id   is "+ TMSessionControl.getSessionid());
 					} catch (Exception e) {
-						//Not sure what is the best thing to do here....just keep trying I guess
+						//Not sure what is the best thing to do here....just exit
 						log.info("Cannot login into OH");
 						e.printStackTrace();
+						System.exit(0);
 					}
 
 				} else {
@@ -206,7 +221,37 @@ public class Main {
 				}				 
 			} 
 			
-						
+			if ((loginSent) && (broker.contentEquals("AMTD"))) {
+				
+				if (System.currentTimeMillis() > (timeSentLogin+(60000*30)) ) {
+					// send keep alive every 30 minutes
+					KeepAliveAmeritrade keepAlive = new KeepAliveAmeritrade(sysconfig.TDAuthURL);
+					try {
+						boolean rc = keepAlive.keepAlive();
+						if (!rc) {
+							// login again
+							LoginAmeritrade login = new LoginAmeritrade(sysconfig.TDLogin, sysconfig.TDPassword, 
+									sysconfig.TDAuthURL, sysconfig.TDSourceApp);
+						    try {
+							    login.login();
+							   //TODO make login boolean to make sure that we logged in.. look at the result to be OK in login response
+						    } catch (IOException e) {
+							     log.info("login to AMTD failed for some reason... we'll try again later ");
+							     e.printStackTrace();							     
+						    }
+						    loginSent=true;
+						}
+					} catch (IOException e) {
+						// what should we do here ?
+						log.info("Something went wrong with sending keep Alive");
+						e.printStackTrace();
+					}
+					timeSentLogin = System.currentTimeMillis();
+					log.info("timeSentLogin is " + timeSentLogin);
+					
+				}
+				
+			}			
 			if ( (loginSent) && (broker.contentEquals("TM")) ) {
 				// for TM we do not have keep alive just request a quote every 10 minutes
 				if (System.currentTimeMillis() > (timeSentLogin+(60000*10)) ) {

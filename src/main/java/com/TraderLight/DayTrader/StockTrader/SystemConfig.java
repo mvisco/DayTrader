@@ -31,6 +31,10 @@ public class SystemConfig {
 	String OHPassword;
 	String OHAuthURL;
 	String OHSourceApp;
+	String TDLogin;
+	String TDPassword;
+	String TDSourceApp;
+	String TDAuthURL;
 	boolean mock;
 	boolean useDB;
 	String qtURL;
@@ -69,6 +73,10 @@ public class SystemConfig {
 				sysConfig.OHPassword = properties.getProperty("OHPassword");
 				sysConfig.OHAuthURL= properties.getProperty("OHAuthURL");
 				sysConfig.OHSourceApp = properties.getProperty("OHSourceApp");
+				sysConfig.TDLogin = properties.getProperty("TDLogin");
+				sysConfig.TDPassword = properties.getProperty("TDPassword");
+				sysConfig.TDAuthURL= properties.getProperty("TDAuthURL");
+				sysConfig.TDSourceApp = properties.getProperty("TDSourceApp");
 				if (properties.getProperty("mock").contains("true")) {
 					sysConfig.mock=true;
 				} else {
