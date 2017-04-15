@@ -16,9 +16,9 @@
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>3</strategy>
     <price>850</price>
-    <strike_increment>2.50</strike_increment>
+    <strike_increment>2.5</strike_increment>
     <impVol>0.15</impVol>
-    <tradeable>true</tradeable>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
    <symbol>AAPL</symbol>
@@ -94,7 +94,7 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>0</strategy>
+    <strategy>3</strategy>
     <price>34</price>
     <strike_increment>0.50</strike_increment>
     <impVol>0.15</impVol>
@@ -116,7 +116,7 @@
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>3</strategy>
     <price>132</price>
-    <strike_increment>0.50</strike_increment>
+    <strike_increment>0.5</strike_increment>
     <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
@@ -135,10 +135,10 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>3</strategy>
-    <price>850</price>
+    <price>900</price>
     <strike_increment>2.50</strike_increment>
     <impVol>0.15</impVol>
-    <tradeable>true</tradeable>
+    <tradeable>false</tradeable>
   </stock>
   <stock>
     <symbol>NFLX</symbol>
@@ -154,11 +154,11 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>0</strategy>
-    <price>850</price>
-    <strike_increment>2.50</strike_increment>
-    <impVol>0.15</impVol>
-    <tradeable>false</tradeable>
+    <strategy>3</strategy>
+    <price>146</price>
+    <strike_increment>1</strike_increment>
+    <impVol>0.25</impVol>
+    <tradeable>true</tradeable>
   </stock>
    <stock>
     <symbol>FB</symbol>
@@ -176,7 +176,7 @@
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>3</strategy>
     <price>140</price>
-    <strike_increment>0.50</strike_increment>
+    <strike_increment>1</strike_increment>
     <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>

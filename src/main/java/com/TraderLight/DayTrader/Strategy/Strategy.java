@@ -18,9 +18,11 @@ import java.util.TimeZone;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.log4j.Logger;
+
 import com.TraderLight.DayTrader.AccountMgmt.AccountMgr;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
+import com.TraderLight.DayTrader.Strategy.GammaScalping.States;
 
 /**
  *  Basic strategy class that is the ancestor of all strategy classes.
@@ -172,5 +174,15 @@ public abstract class  Strategy {
 			   double longPrice, double shortPrice)  {
 		// To be overridden in children
 		return;
+	 }
+	 
+	 public void closePositions(String symbol) {
+		// To be overridden in children
+		 return;
+	 }
+	 
+	 public void setStateToS0() {
+		 // to be overriden
+		 return;
 	 }
 }

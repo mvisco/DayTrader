@@ -19,7 +19,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
+
 import org.apache.log4j.Logger;
+
 import com.TraderLight.DayTrader.TradeMonster.CancelOrderTM;
 import com.TraderLight.DayTrader.TradeMonster.CreateStockOrderTM;
 import com.TraderLight.DayTrader.TradeMonster.RequestOrderStatusTM;
@@ -350,7 +352,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 		// for example we need to convert AAPL:20130419:395:C in AAPL_041913C395
 		// second we need to get a quote 
 		// third we need to place the order
-
+		log.info("Thread ID is: " + Thread.currentThread().getId());
 		String[] symbolSplit = optionSymbol.split(":");
 
 		// Date used by Account Mgr is in the form of 20130419 while AMTD needs 041913		
@@ -368,7 +370,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 		String expiration = df1.format(oldDate);
 
 		optionSymbolAMTD = symbolSplit[0]+"_"+expiration+symbolSplit[3]+symbolSplit[2]; 
-				
+		String iv = "";		
 		
 		// Get the quote now
 		 GetQuoteAmeritrade optionQuote = new GetQuoteAmeritrade();
@@ -376,7 +378,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 		try { 
 			
 			optionPrice = optionQuote.getQuotes(optionSymbolAMTD,buy,closeTransaction,optionBidAskSpread);
-			
+			iv = optionQuote.getIv();
 			if (this.buy_sell.contentEquals("buy") ){
 				optionPrice = optionQuote.getAsk();
 			} else {
@@ -387,19 +389,19 @@ public class GenericOrderExecutorAMTD implements Runnable {
 			log.info("Something went wrong with getting quote for symbol " + optionSymbolTM);
 			e.printStackTrace();
 			// What's to do here ??  let's just  return failure to the account manager 	
-			account.optionReturnOrder(false,"", "", " ", "", buy_sell, "", strategy );
+			account.optionReturnOrder(false,"", "", " ", "", buy_sell, "", strategy, iv );
 			return;
 		}
 		
 		if (String.valueOf(optionPrice).isEmpty()) {
 			// We get here if something went wrong with getting the quote
-			account.optionReturnOrder(false,"", "", " ", "", buy_sell, "", strategy );
+			account.optionReturnOrder(false,"", "", " ", "", buy_sell, "", strategy, iv );
 			return;
 		}
 		log.info("Option Price is " + optionPrice);	
 		if (mock) {
 			// do not place order just simulate success			
-			account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy);
+			account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv);
 			return;
 		}
 	

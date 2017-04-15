@@ -138,6 +138,8 @@ public class Main {
 			   
 		   }
 			symbols += stock.getSymbol()+",";
+			// initialize positions in Account manager if we have any.....
+			account.initializePositions(stock.getSymbol(), stock.getStrategy());
 		}
         
 		MarketDataProvider.setParameters(sysconfig.qtURL, symbols);
@@ -195,8 +197,7 @@ public class Main {
 					     System.exit(0);
 				    }
 				    loginSent=true;
-				}
-				if (broker.contentEquals("TM")  ) {		    	
+				} else if (broker.contentEquals("TM")  ) {		    	
 
 					// Login into TM
 					LoginTradeMonster loginTM = new LoginTradeMonster(sysconfig.OHLogin, sysconfig.OHPassword, 
@@ -343,6 +344,16 @@ public class Main {
 					log.info("Closing all positions.........");
 					log.info("Closing all positions.........");
 					log.info("-------------------------------");
+					for (Stock stock : listOfStocks) {
+						//TODO Close all positions
+						try {
+				    		Thread.sleep(1000);
+				    		stock.strategy.closePositions(stock.getSymbol());
+							} catch (InterruptedException e) {
+								log.error("got exception from  sleep when waiting for orders to close");
+								e.printStackTrace();
+							}
+					}
 
 					//Wait for 1 minute to wait for all  orders to close and then analyze trades
 					try {

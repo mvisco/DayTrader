@@ -58,13 +58,13 @@ public class OptionCostProvider {
     	 * d: dividend percent in year
     	 */
     	// Long Straddle Parameters
-        double S     = 1120;
-        double Xcall     = 1115;
-        double Xput = 1125;
-        double expirationindays1=1;
+        double S     = 33.96;
+        double Xcall     = 34.5;
+        double Xput = 33.5;
+        double expirationindays1=14;
         double numberofdaysinyear1=365;
         double T1     = (expirationindays1/numberofdaysinyear1);
-        double sigma = 0.30;
+        double sigma = 0.12;
         OptionCostProvider optionCost = new OptionCostProvider();
         System.out.println("Current price of the call is: " + optionCost.getCallCost(S,Xcall,T1,sigma));
         System.out.println("Current price of the put  is: " + optionCost.getPutCost(S,Xput,T1,sigma));

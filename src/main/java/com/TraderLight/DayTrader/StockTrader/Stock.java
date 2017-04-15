@@ -643,46 +643,54 @@ public class Stock {
 		this.impVol = impVol;
 	}
 
-		public void createStrikes() {
-		
-	    	final int STRIKESNUMBER = 10; // we will have 21 strikes
+	public void createStrikes() {
 
-	    	BigDecimal priceBD = new BigDecimal(String.valueOf(this.price));
-	    	BigDecimal increment = new BigDecimal(String.valueOf(this.strike_increment));
-	    	RoundingMode rm1;
-	    	rm1 = RoundingMode.valueOf("HALF_DOWN");		
-	    	BigDecimal price_new = priceBD.setScale(0, rm1);
-	    	
-	    	if (this.strike_increment == 2.5) {
-	    		//for options that have a 2.5 increment we have to start from a multiple of 5. For example if we GOOGL price 
-	    		// set at 852 we will start from 850 to build the lost of strikes. For other options we can start anywhere on the 
-	    		// int version of price for ex. AAPL at 135.33 we will start at 135 and increment either by 1 or by 0.5
-	    		price_new = price_new.subtract(price_new.remainder(new BigDecimal("5.0")));
-	    	}
-	    	
-	    	for (int i = -STRIKESNUMBER; i <=STRIKESNUMBER; i++) {
-				strikes.add(price_new.add(increment.multiply(new BigDecimal(i))));
-			}
-		
-	    }
+		final int STRIKESNUMBER = 30; // we will have 61 strikes
+
+		BigDecimal priceBD = new BigDecimal(String.valueOf(this.price));
+		BigDecimal increment = new BigDecimal(String.valueOf(this.strike_increment));
+		RoundingMode rm1;
+		rm1 = RoundingMode.valueOf("HALF_DOWN");		
+		BigDecimal price_new = priceBD.setScale(0, rm1);
+
+		if (this.strike_increment == 2.5) {
+			//for options that have a 2.5 increment we have to start from a multiple of 5. For example if we GOOGL price 
+			// set at 852 we will start from 850 to build the lost of strikes. For other options we can start anywhere on the 
+			// int version of price for ex. AAPL at 135.33 we will start at 135 and increment either by 1 or by 0.5
+			price_new = price_new.subtract(price_new.remainder(new BigDecimal("5.0")));
+		}
+
+		for (int i = -STRIKESNUMBER; i <=STRIKESNUMBER; i++) {
+			strikes.add(price_new.add(increment.multiply(new BigDecimal(i))));
+		}
+
+	}
 	
  
 
-		public void createExpirations() {
-        	
-        	final int EXPIRATIONSNUMBER = 10; // we will have 11 expiration dates
-        	SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-        	Calendar rightnow = Calendar.getInstance();
-        	//start from  the first day of current week
-        	rightnow.add(Calendar.DAY_OF_WEEK, rightnow.getFirstDayOfWeek()-rightnow.get(Calendar.DAY_OF_WEEK));
-        	// get the friday of this week
-        	rightnow.add(Calendar.DAY_OF_MONTH, 5);
-        	for (int i = 0; i <= EXPIRATIONSNUMBER; i++) {
-        		// add this Friday and next 10 Fridays to the list
-        		rightnow.add(Calendar.DAY_OF_MONTH, i*7);
-        		expirations.add(sdf.format(rightnow.getTime()));
-        	}
-	    }
+	public double getStrike_increment() {
+		return strike_increment;
+	}
+
+	public void setStrike_increment(double strike_increment) {
+		this.strike_increment = strike_increment;
+	}
+
+	public void createExpirations() {
+
+		final int EXPIRATIONSNUMBER = 10; // we will have 11 expiration dates
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		Calendar rightnow = Calendar.getInstance();
+		//start from  the first day of current week
+		rightnow.add(Calendar.DAY_OF_WEEK, rightnow.getFirstDayOfWeek()-rightnow.get(Calendar.DAY_OF_WEEK));
+		// get the friday of this week
+		rightnow.add(Calendar.DAY_OF_MONTH, 5);
+		for (int i = 0; i <= EXPIRATIONSNUMBER; i++) {
+			// add this Friday and next 10 Fridays to the list
+			rightnow.add(Calendar.DAY_OF_MONTH, i*7);
+			expirations.add(sdf.format(rightnow.getTime()));
+		}
+	}
 
 		public List<BigDecimal> getStrikes() {
 			return strikes;

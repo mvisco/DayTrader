@@ -24,7 +24,7 @@ public class GetQuoteAmeritrade {
 		  double bid1;
 		  double ask1;
 			
-		  
+		  log.info("Requesting quote for " + symbols);
 		  String str = SessionControl.getUrl()+"100/Quote;jsessionid="+SessionControl.getSessionid()+"?source="+SessionControl.getSourceApp()+"&symbol="+symbols;
 		  String res=URLUtil.getfromURL(str);
 		  //System.out.println("res is " + res);
@@ -34,6 +34,11 @@ public class GetQuoteAmeritrade {
 		  bidS = root.getChildwithNameNonNull("quote-list").getChildwithNameNonNull("quote").getChildwithName("bid").getValue();
 		  askS = root.getChildwithNameNonNull("quote-list").getChildwithNameNonNull("quote").getChildwithName("ask").getValue();
 		  iv = root.getChildwithNameNonNull("quote-list").getChildwithNameNonNull("quote").getChildwithName("implied-volatility").getValue();
+		  
+		  log.info("bid is " + bidS + " ask is "+ askS + " impVol is " + iv);
+		  
+		  Double imp_vol = Double.parseDouble(iv)/100.0;
+		  iv = String.valueOf(imp_vol);
 		  
 		  if (buy) {
 			  return askS;
