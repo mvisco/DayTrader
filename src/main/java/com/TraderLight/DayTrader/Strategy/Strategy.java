@@ -185,4 +185,10 @@ public abstract class  Strategy {
 		 // to be overriden
 		 return;
 	 }
+	 
+	 public void setState(int count_calls, int count_puts) {
+		 
+         return;
+		 
+	 }
 }

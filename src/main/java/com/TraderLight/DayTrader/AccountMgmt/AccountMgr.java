@@ -412,7 +412,7 @@ public class AccountMgr {
 			log.info("Not allowing opening a new position for symbol " + quote.getSymbol());
 			// increase position open it will be decreased in returnOrderParameters when we return failure
 			positionOpen++;
-			optionReturnOrder(false,"", quote.getSymbol(), " ", String.valueOf(lot), buy_sell, open_close_update, strategy,"0" );
+			optionReturnOrder(false,"", quote.getSymbol(), " ", String.valueOf(lot), buy_sell, open_close_update, strategy,"0", "0" );
 			return;
 		}
 		
@@ -483,7 +483,7 @@ public class AccountMgr {
 
 		 if (!optionPositions.containsKey(quote.getSymbol())) {
 			 log.info( " Something is asking to sell positions that we do not have ");
-			 optionReturnOrder(false,"", quote.getSymbol(), " ", String.valueOf(lot), buy_sell, open_close_update, strategy, "0" );
+			 optionReturnOrder(false,"", quote.getSymbol(), " ", String.valueOf(lot), buy_sell, open_close_update, strategy, "0", "0" );
 			 return;
 		 }
 
@@ -501,26 +501,26 @@ public class AccountMgr {
 
 		 if (option == null) {
 			 log.info("No option found in Account Mgr");
-			 optionReturnOrder(false,"", quote.getSymbol(), " ", String.valueOf(lot), buy_sell, open_close_update, strategy,"0" );
+			 optionReturnOrder(false,"", quote.getSymbol(), " ", String.valueOf(lot), buy_sell, open_close_update, strategy,"0", "0" );
 			 return;
 		 }
 		 String priceS = String.valueOf(quote.getLast());
-			if (broker.contentEquals("AMTD")) {
-				GenericOrderExecutorAMTD order = new GenericOrderExecutorAMTD(buy_sell, open_close_update, option.getSymbol(), 
-						quote.getSymbol(), priceS, lot, this, strategy, mock, true);				
-				Thread thread = new Thread(order);
-				thread.start();
-				
-			} else if (broker.contentEquals("TM")) {
-				
-				GenericOrderExecutorTM order = new GenericOrderExecutorTM(buy_sell, open_close_update, option.getSymbol(), 
-						quote.getSymbol(), priceS, lot, this, strategy, mock, true);				
-				Thread thread = new Thread(order);
-				thread.start();	
-				
-			} else {
-				log.info("Broker not supported in Account Mgr");
-			}
+		 if (broker.contentEquals("AMTD")) {
+			 GenericOrderExecutorAMTD order = new GenericOrderExecutorAMTD(buy_sell, open_close_update, option.getSymbol(), 
+					 quote.getSymbol(), priceS, lot, this, strategy, mock, true);				
+			 Thread thread = new Thread(order);
+			 thread.start();
+
+		 } else if (broker.contentEquals("TM")) {
+
+			 GenericOrderExecutorTM order = new GenericOrderExecutorTM(buy_sell, open_close_update, option.getSymbol(), 
+					 quote.getSymbol(), priceS, lot, this, strategy, mock, true);				
+			 Thread thread = new Thread(order);
+			 thread.start();	
+
+		 } else {
+			 log.info("Broker not supported in Account Mgr");
+		 }
 		    	
 	}
 
@@ -543,7 +543,7 @@ public class AccountMgr {
     	
     	if (!optionPositions.containsKey(quote.getSymbol())) {
     		log.info( " Something is asking to sell positions that we do not have ");
-    		optionReturnOrder(false,"", quote.getSymbol(), " ", "", buy_sell, "", strategy,"0" );
+    		optionReturnOrder(false,"", quote.getSymbol(), " ", "", buy_sell, "", strategy,"0", "0" );
     		return;
     	}
     	
@@ -581,9 +581,10 @@ public class AccountMgr {
 
     
     public void optionReturnOrder(boolean success, String optionSymbol, String symbol, String price, String buy_sell, String lot,
-    		String open_close_update, Strategy strategy, String iv) {
+    		String open_close_update, Strategy strategy, String iv, String stockPrice) {
     	
     	double optionPrice;
+    	double sPrice;
     	int lot_int;
 
     	updateLock.lock();
@@ -598,12 +599,12 @@ public class AccountMgr {
     				positionOpen-=1;			  
     			}
     			// if no success on filling the order tell the strategy to adjust and return
-    			//TEMP CODE leave the strategy in STEMP for failure for debug......
-    			//strategy.strategyCallback(false, symbol, buy_sell, "0");	  
+    			strategy.strategyCallback(false, symbol, buy_sell, "0");	  
     			return;
     		}
 
     		optionPrice=Double.parseDouble(price);
+    		sPrice = Double.parseDouble(stockPrice);
     		// this lot is the filled quantity it does not necessarily match with the lot in the strategy although it should be the same 
     		// if we place orders at market.
     		lot_int = Integer.parseInt(lot);
@@ -613,8 +614,9 @@ public class AccountMgr {
     		if (open_close_update.contentEquals("open")) {
 
     			//  allocate option position object   		 
-    			double singleTradeCost= (optionTradeCost+pricePerContract*(lot_int/100)); 
-    			OptionPosition option = new OptionPosition(optionSymbol, optionPrice, lot_int, singleTradeCost, Double.parseDouble(iv));
+    			double singleTradeCost= (optionTradeCost+pricePerContract*(lot_int/100));
+    			OptionPosition option = new OptionPosition(optionSymbol, optionPrice, lot_int, singleTradeCost, Double.parseDouble(iv), sPrice, 
+    					Calendar.getInstance().getTime());
     			updateCash(totalPrice, true, singleTradeCost);
     			// add to positions
     			if (optionPositions.containsKey(symbol)) {
@@ -658,13 +660,15 @@ public class AccountMgr {
     			double singleTradeCost= (optionTradeCost+pricePerContract*(lot_int/100));
 
     			if (buy_sell.contentEquals("buy")) {
+    				//TODO FIX ME we can update the option position with a different option symbol understand the implications........
     				option.priceBought = (option.priceBought*option.getQuantity() + optionPrice*lot_int)/(option.getQuantity() + lot_int);   	   
     				option.updateQuantity(lot_int);
     				updateCash(Double.parseDouble(price)*lot_int, true, singleTradeCost);
     				strategy.strategyCallback(true, symbol, buy_sell, "0");
     			} else {
     				// We sold some options so we need to create a trade in the daytrades structure
-    				OptionPosition option1 = new OptionPosition(optionSymbol, option.priceBought, lot_int, singleTradeCost, option.impVol);
+    				OptionPosition option1 = new OptionPosition(optionSymbol, option.priceBought, lot_int, singleTradeCost, option.impVol, 
+    						sPrice, Calendar.getInstance().getTime());
     				option1.setPriceSold(Double.parseDouble(price));
     				List<OptionPosition> listOfOption;
     				listOfOption = new ArrayList<OptionPosition>();
@@ -693,7 +697,7 @@ public class AccountMgr {
     			option.closeConnection();
 
     		} else if (open_close_update.contentEquals("close")) {
-    			log.info("Closing position for symbol " + symbol);
+    			log.info("Closing a position for symbol " + symbol);
     			List<OptionPosition> listOfOption;
     			listOfOption = optionPositions.get(symbol);
     			List<OptionPosition> listOfOption1 = new ArrayList<OptionPosition>();
@@ -704,6 +708,8 @@ public class AccountMgr {
 
     			}
     			for (OptionPosition option : listOfOption1) {
+    				//Remember that if there are multiple positions we close one position at the time and we can be in a 
+    				// situation where we have multiple positions with the same symbol
     				if (option.getSymbol().equals(optionSymbol) ) {
     					option.setPriceSold(optionPrice);
     					double singleTradeCost= (optionTradeCost+pricePerContract*(lot_int/100));
@@ -725,6 +731,7 @@ public class AccountMgr {
     						// reduce positions
     						positionOpen--;
     					}
+    					break;
     				}
 
     			}
@@ -744,7 +751,11 @@ public class AccountMgr {
     					break;
     				}
     			}
-
+    			// Store the day trade in the DB
+				optionToClose.StoreInDB();
+    			optionToClose.establishConnection("jdbc:mysql://localhost/DayTrades");
+    			optionToClose.storeOptionPosition(optionToClose, Calendar.getInstance().getTime());
+    			optionToClose.closeConnection();
     		}
     		// update strategy
     		strategy.strategyCallback(true, symbol, buy_sell, price);
@@ -781,8 +792,10 @@ public class AccountMgr {
 		//double supPrice = price + strike_percent_variation*price;
 		
 		int price_int = (int)(price*10);
-		double infPrice = (price_int/10.0) - stock.getStrike_increment();
-		double supPrice = (price_int/10.0) + stock.getStrike_increment();
+		//double infPrice = (price_int/10.0) - stock.getStrike_increment();
+		//double supPrice = (price_int/10.0) + stock.getStrike_increment();
+		double infPrice = (price_int/10.0) ;
+		double supPrice = (price_int/10.0) ;
 		log.info("infPrice is " + infPrice);		
 		log.info("supPrice is " + supPrice );
 		
@@ -841,7 +854,7 @@ public class AccountMgr {
 	    }
 	    	
 	    // TODO TEMP CODE START OVERWRITE EXPIRATION
-	    expiration = "20170413";
+	    expiration = "20170519";
 	    // TEMP CODE END
 	    optionSymbol=symbol+":"+expiration+":"+new_strike.toPlainString()+":"+callOrPut;	    
 	    return optionSymbol;
@@ -1117,6 +1130,8 @@ public class AccountMgr {
 		Connection con=null;
 		Statement stmt;
 		ResultSet rs;
+		int count_calls=0;
+		int count_puts=0;
 		
 		//Register the JDBC driver for MySQL.
 		try {
@@ -1150,7 +1165,9 @@ public class AccountMgr {
 				//double ps = rs.getDouble("PRICE_SOLD");
 				double iv = rs.getDouble("IMP_VOL");
 				double tc = rs.getDouble("TRANSACTION_COST");
-				OptionPosition option = new OptionPosition(option_symbol, pb, q, tc, iv);
+				double sp = rs.getDouble("UNDERLYING_PRICE");
+				Date date = rs.getDate("DATE_ACQUIRED");
+				OptionPosition option = new OptionPosition(option_symbol, pb, q, tc, iv, sp, date);
     			// add to positions
     			if (optionPositions.containsKey(symbol)) {
     				// stock symbol already exists in the map
@@ -1160,16 +1177,20 @@ public class AccountMgr {
     				listOption.add(option);
     				optionPositions.put(symbol, listOption);
     			}
-    			// move strategy to the right state 
-    			// let's move it directly to S0 for GammaScalping it should work because we should have two positions
-    			strategy.setStateToS0();
-			   
+    			if (getCallOrPutfromSymbol(option_symbol).contentEquals("C")) {
+    				count_calls += 1;
+    			} else {
+    				count_puts += 1;
+    			}   			
 			}
 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		strategy.setState(count_calls, count_puts);
+		//TODO we have to let the strategy  know the price of the underlying that we are in for the position.......
 		
 	}
 }

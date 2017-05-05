@@ -19,6 +19,7 @@ import com.TraderLight.DayTrader.StockTrader.Logging;
 
 
 
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -26,6 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -44,6 +46,8 @@ public class OptionPosition {
 	int quantity;
 	double transactionCost;
 	double impVol;
+	double underlying_price;
+	Date date_acquired;
 	public static final Logger log = Logging.getLogger(true);
 	Connection con;
 	Statement stmt;
@@ -51,12 +55,14 @@ public class OptionPosition {
 
 
 
-	OptionPosition(String optionSymbol, double priceB, int q, double cost, double impVol){
+	OptionPosition(String optionSymbol, double priceB, int q, double cost, double impVol, double underlying_price, Date date_acquired){
 		this.symbol = optionSymbol;
 		this.priceBought =  priceB;
 		this.quantity = q;
 		this.transactionCost = cost;
 		this.impVol=impVol;
+		this.date_acquired = date_acquired;
+		this.underlying_price = underlying_price;
 
 	}
 
@@ -141,9 +147,10 @@ public class OptionPosition {
 		try {
 
 			String symbol = option.getSymbol();
-			String stock_symbol = getStockSymbol(symbol);			 
-			String insertSQL = "INSERT INTO position (id,symbol,option_symbol,quantity,price_bought,price_sold,imp_vol,transaction_cost) " 
-					+  "VALUES (NULL,?,?,?,?,?,?,?)";
+			String stock_symbol = getStockSymbol(symbol);	
+			Timestamp date = new java.sql.Timestamp(date_acquired.getTime());
+			String insertSQL = "INSERT INTO position (id,symbol,option_symbol,quantity,price_bought,price_sold,imp_vol,transaction_cost, underlying_price,date_acquired ) " 
+					+  "VALUES (NULL,?,?,?,?,?,?,?,?,?)";
 
 			PreparedStatement pstmt = con.prepareStatement(insertSQL);
 
@@ -155,6 +162,8 @@ public class OptionPosition {
 			pstmt.setDouble(5,option.getPriceSold());
 			pstmt.setDouble(6, option.impVol);
 			pstmt.setDouble(7, option.transactionCost);
+			pstmt.setDouble(8, option.underlying_price);
+			pstmt.setTimestamp(9, date);
 
 			// Insert 
 			log.info("Storing in DB option position for symbol " + symbol);
@@ -258,7 +267,7 @@ public class OptionPosition {
 	
 	public static void main(String[] args) {
 		
-		OptionPosition option = new OptionPosition("AAPL:20170413:142:P",3.5, 10000, 100, 0.15 );
+		OptionPosition option = new OptionPosition("AAPL:20170413:142:P",3.5, 10000, 100, 0.15, 130, Calendar.getInstance().getTime() );
 		option.StoreInDB();
 		option.establishConnection("jdbc:mysql://localhost/Positions");
 /*

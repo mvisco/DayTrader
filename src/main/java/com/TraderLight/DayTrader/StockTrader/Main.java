@@ -26,6 +26,7 @@ import com.TraderLight.DayTrader.MarketDataProvider.MarketDataProvider;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.Strategy.GammaScalping;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
+import com.TraderLight.DayTrader.Strategy.MeanReversionNEq2;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 import com.TraderLight.DayTrader.Strategy.TrendStrategy;
@@ -125,6 +126,12 @@ public class Main {
 			   
 		   } else if ( stock.getStrategyID() == 3) {
 			   Strategy strategy = new GammaScalping(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), 
+						stock.getVolumeVector(), stock);
+			   stock.setStrategy(strategy);
+			   
+		   } else if ( stock.getStrategyID() == 4) {
+			   Strategy strategy = new MeanReversionNEq2(stock.getSymbol(), stock.getLot(), stock.getChange(),
 						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), 
 						stock.getVolumeVector(), stock);
 			   stock.setStrategy(strategy);
@@ -337,7 +344,7 @@ public class Main {
 						    e.printStackTrace();
 					    }
 				}
-				if ( ((hour==13) && (min>=58)) ) {
+				if ( ((hour==13) && (min>=57)) ) {
 					//close all positions
 					log.info("-------------------------------");
 					log.info("Closing all positions.........");
