@@ -171,7 +171,7 @@ public abstract class  Strategy {
 
 	 public void updateStrategyParameters(double change, double profit, double loss, int lot, boolean tradeable, boolean closePosition, 
 			   boolean openLongPosition, boolean openShortPosition, boolean openLongPositionWithPrice, boolean openShortPositionWithPrice,
-			   double longPrice, double shortPrice)  {
+			   double longPrice, double shortPrice, double closeLongPosition, double closeShortPosition)  {
 		// To be overridden in children
 		return;
 	 }
@@ -186,7 +186,7 @@ public abstract class  Strategy {
 		 return;
 	 }
 	 
-	 public void setState(int count_calls, int count_puts) {
+	 public void setState(int count_calls, int count_puts, double underlying_price) {
 		 
          return;
 		 

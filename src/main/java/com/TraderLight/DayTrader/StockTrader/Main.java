@@ -186,7 +186,7 @@ public class Main {
 				for (Stock stock : listOfStocks ) {
 					stock.strategy.updateStrategyParameters(stock.change, stock.profit, stock.loss, stock.lot, stock.tradeable, 
 							stock.closePosition, stock.openLongPosition, stock.openShortPosition, stock.openLongPositionWithPrice, stock.openShortPositionWithPrice, 
-							stock.priceForLongPosition, stock.priceForShortPosition);
+							stock.priceForLongPosition, stock.priceForShortPosition, stock.closeLongPosition, stock.closeShortPosition);
 				}
 			}
 						

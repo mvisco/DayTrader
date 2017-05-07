@@ -494,8 +494,7 @@ public class AccountMgr {
 			 Xprice = getExercisePricefromSymbol(o.getSymbol());
 
 			 if (getCallOrPutfromSymbol(o.getSymbol()).equals(call_or_put))  {
-				 option = o;
-				 break;
+				 option = o;				 
 			 }
 		 }	
 
@@ -646,8 +645,7 @@ public class AccountMgr {
     			OptionPosition option= null;
     			for (OptionPosition o : optionPositions.get(symbol)) {	       		 
     				if (o.getSymbol().equals(optionSymbol))  {
-    					option = o;
-    					break;
+    					option = o;   				
     				}
     			}	
 
@@ -683,6 +681,10 @@ public class AccountMgr {
     				}
     				updateCash(Double.parseDouble(price)*lot_int, false, singleTradeCost);
     				option.updateQuantity(-lot_int);
+    				if (option.getQuantity() == 0) {
+    					// this option should be removed from list because we do not have any left
+    					optionPositions.get(symbol).remove(option);
+    				}
     				// Store the day trade in the DB
     				option1.StoreInDB();
         			option1.establishConnection("jdbc:mysql://localhost/DayTrades");
@@ -974,7 +976,7 @@ public class AccountMgr {
 	    	for (OptionPosition option : optionPositions.get(quote.getSymbol())) {
 	    		
 	    		if (getCallOrPutfromSymbol(option.getSymbol()).equals(optionType))  {
-	    			quantity = option.getQuantity();
+	    			quantity += option.getQuantity();
 	    		}
 	    		
 	    	}	    	
@@ -1132,6 +1134,7 @@ public class AccountMgr {
 		ResultSet rs;
 		int count_calls=0;
 		int count_puts=0;
+		double underlying_price = 0;
 		
 		//Register the JDBC driver for MySQL.
 		try {
@@ -1156,6 +1159,7 @@ public class AccountMgr {
 		try {
 			Statement statement = con.createStatement();
 			rs = statement.executeQuery(selectOption);
+			
 			while (rs.next()) {
 				
 				//String stock_symbol = rs.getString("SYMBOL");
@@ -1189,8 +1193,24 @@ public class AccountMgr {
 			e.printStackTrace();
 		}
 		
-		strategy.setState(count_calls, count_puts);
-		//TODO we have to let the strategy  know the price of the underlying that we are in for the position.......
+		if (count_puts == 0) {			
+		    if (count_calls == 1) {		    	
+		    	underlying_price = optionPositions.get(symbol).get(0).getUnderlying_price();
+		    } else if ( count_calls == 2) {		    	
+		    	underlying_price = (optionPositions.get(symbol).get(0).getUnderlying_price() + 
+		    			optionPositions.get(symbol).get(1).getUnderlying_price())/2.0;
+		    	
+		    }
+		}
 		
+		if (count_calls == 0 ) {
+		    if (count_puts == 1) {		    	
+		    	underlying_price = optionPositions.get(symbol).get(0).getUnderlying_price();
+		    } else if ( count_puts == 2) {		    	
+		    	underlying_price = (optionPositions.get(symbol).get(0).getUnderlying_price() + 
+		    			optionPositions.get(symbol).get(1).getUnderlying_price())/2.0;		    	
+		    }
+		}
+		strategy.setState(count_calls, count_puts, underlying_price);
 	}
 }

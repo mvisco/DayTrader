@@ -47,6 +47,7 @@ public class MeanReversionNEq2 extends Strategy{
 	double longPositionPrice;
 	int count;
 	Stock stock;
+	boolean soldPercentage = false;
 	
 	private final String OPEN = "open";
 	private final String CLOSE = "close";
@@ -508,6 +509,82 @@ public class MeanReversionNEq2 extends Strategy{
 
 	}
 	
+	public void closeLongPosition(String symbol, double longPosition ) {
+		
+	    if ( (longPosition < 0) || (longPosition > 1) ) {
+	    	log.info(" Close long Position should be specified with a percentage  number between 0 and 1");
+	    	return;
+		}
+	    
+	    // After we sell a portion the strategy remains in SDelta to avoid to sell other times until the configuration flag 
+	    // changes back to 0 we use a local state flag that tell us no to go into this selling loops
+	    if (this.soldPercentage) {
+	    	// we already sold so return.....
+	    	return;
+	    }
+	    
+		switch (StrategyState) {
+		
+		    case SDelta:		    	
+		    	log.info(" Attempting to close a percent position on symbol" + symbol + " percentage is " + longPosition);
+		    	this.desiredState = States.SDelta;
+			    this.currentState= StrategyState;
+		    	this.StrategyState=States.STemp;
+				int calls = account.getQuantity(lastQuote, "C" );
+				log.info("Total number of Calls reported by Account Mgr " + calls);					
+				int delta_int = (int) (calls*longPosition);
+				delta_int = (delta_int/100)*100;
+				log.info("Number of calls that we are closing " + delta_int);
+				this.soldPercentage = true;
+				account.deltaAdjustment(SELL, UPDATE, lastQuote, delta_int, "C", this);
+			
+		    default:
+               // this makes sense only in SDelta
+		    	//log.info("Asked to close position but we have no positions on symbol" + symbol);
+			    break;						
+		}
+		return;
+
+	}
+		
+	
+		public void closeShortPosition(String symbol, double shortPosition ) {
+			
+		    if ( (shortPosition < 0) || (shortPosition > 1) ) {
+		    	log.info(" Close Short Position should be specified with a percentage  number between 0 and 1");
+		    	return;
+			}
+		    // After we sell a portion the strategy remains in SDelta to avoid to sell other times until the configuration flag 
+		    // changes back to 0 we use a local state flag that tell us no to go into this selling loops
+		    if (this.soldPercentage) {
+		    	// we already sold so return.....
+		    	return;
+		    }	    
+			switch (StrategyState) {
+			
+			    case SDelta:		    	
+			    	log.info(" Attempting to close a percent position on symbol" + symbol + " percentage is " + shortPosition);
+			    	this.desiredState = States.SDelta;
+				    this.currentState= StrategyState;
+			    	this.StrategyState=States.STemp;			    	
+					int puts = account.getQuantity(lastQuote, "P" );
+					log.info("Total number of Puts reported by Account Mgr " + puts);						
+					int delta_int = (int) (puts*shortPosition);
+					delta_int = (delta_int/100)*100;
+					log.info("Number of puts  that we are closing " + delta_int);
+					this.soldPercentage = true;
+					account.deltaAdjustment(SELL, UPDATE, lastQuote, delta_int, "P", this);
+			    	break;
+			    	
+			    default:
+	               // this makes sense only in SDelta
+			    	//log.info("Asked to close position but we have no positions on symbol" + symbol);
+				    break;						
+			}
+			return;
+
+		}
+	
 	
 	@Override	
 	public void setStateToS0() {
@@ -540,7 +617,7 @@ public class MeanReversionNEq2 extends Strategy{
    @Override
    public void updateStrategyParameters(double change, double profit, double loss,int lot, boolean tradeable, boolean closePosition, 
 		   boolean openLongPosition, boolean openShortPosition, boolean openLongPositionWithPrice, boolean openShortPositionWithPrice,
-		   double longPrice, double shortPrice) {
+		   double longPrice, double shortPrice, double closePercentLongPosition, double closePercentShortPosition) {
    	
    	this.objective_change=change;
    	this.profit=profit;
@@ -550,6 +627,18 @@ public class MeanReversionNEq2 extends Strategy{
    	if (closePosition==true) {
    		//this.closePositions(this.symbol);
    		reallyClosePositions(symbol);
+   	}
+   	
+   	if (closePercentLongPosition != 0) {
+   		closeLongPosition(symbol,  closePercentLongPosition );
+   	} else {
+   		this.soldPercentage = false;
+   	}
+   	
+   	if (closePercentShortPosition != 0) {
+   		closeLongPosition(symbol,  closePercentShortPosition );
+   	} else {
+   		this.soldPercentage = false;
    	}
    	
    	if (openLongPosition) {
@@ -637,7 +726,7 @@ public class MeanReversionNEq2 extends Strategy{
    	return false;
    }
    
-   public void setState(int count_calls, int count_puts) {
+   public void setState(int count_calls, int count_puts, double underlying_price) {
 		
 	   if (count_calls == 0) {
 		   if (count_puts == 0) {
@@ -660,7 +749,7 @@ public class MeanReversionNEq2 extends Strategy{
 			   this.StrategyState = States.SDelta;
 		   }
 	   }
-	   
+	   this.price = underlying_price;
 	 }
 
 }

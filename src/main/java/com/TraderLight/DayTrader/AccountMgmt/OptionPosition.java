@@ -40,6 +40,7 @@ import java.util.Date;
 public class OptionPosition {
 
 
+
 	String symbol;
 	double priceBought;
 	double priceSold;
@@ -97,6 +98,11 @@ public class OptionPosition {
 		this.transactionCost += cost;
 
 	}
+	
+	public double getUnderlying_price() {
+		return underlying_price;
+	}
+
 
 	public void updateQuantity(int quantity) {
 

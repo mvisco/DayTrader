@@ -324,7 +324,7 @@ public class MeanReversionStrategy extends Strategy{
     @Override
     public void updateStrategyParameters(double change, double profit, double loss,int lot, boolean tradeable, boolean closePosition, 
 		   boolean openLongPosition, boolean openShortPosition, boolean openLongPositionWithPrice, boolean openShortPositionWithPrice,
-		   double longPrice, double shortPrice) {
+		   double longPrice, double shortPrice, double closeLongPosition, double closeShortPosition) {
     	
     	this.objective_change=change;
     	this.profit=profit;

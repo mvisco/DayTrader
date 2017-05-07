@@ -64,6 +64,8 @@ public class Stock {
 	double strike_increment;
 	double impVol;
 	static long modifiedTime=0L;
+	double closeLongPosition;
+	double closeShortPosition;
 	Strategy strategy;
 	List<Integer> volumeVector;
 	static List<Stock> listOfStocks = new ArrayList<Stock>(); // contains all the stocks of interest for the trading session
@@ -293,6 +295,24 @@ public class Stock {
 			     }
 		        
 		        if (event.isStartElement()) {
+		        	if (event.asStartElement().getName().getLocalPart().equals("closeLongPosition")) {
+		        		event = eventReader.nextEvent();
+		                stock.closeLongPosition = Double.valueOf(event.asCharacters().getData());
+		                continue;
+		        	
+		             }
+			     }
+		        
+		        if (event.isStartElement()) {
+		        	if (event.asStartElement().getName().getLocalPart().equals("closeShortPosition")) {
+		        		event = eventReader.nextEvent();
+		                stock.closeShortPosition = Double.valueOf(event.asCharacters().getData());
+		                continue;
+		        	
+		             }
+			     }
+		        
+		        if (event.isStartElement()) {
 		        	if (event.asStartElement().getName().getLocalPart().equals("openLongPosition")) {
 		        		event = eventReader.nextEvent();
 		                stock.openLongPosition = Boolean.parseBoolean(event.asCharacters().getData());
@@ -516,6 +536,24 @@ public class Stock {
 			        		event = eventReader.nextEvent();
 			        		modifiedStock.closePosition = Boolean.parseBoolean(event.asCharacters().getData());            
 			                continue;		        	
+			             }
+				     }
+			        
+			        if (event.isStartElement()) {
+			        	if (event.asStartElement().getName().getLocalPart().equals("closeLongPosition")) {
+			        		event = eventReader.nextEvent();
+			                modifiedStock.closeLongPosition = Double.valueOf(event.asCharacters().getData());
+			                continue;
+			        	
+			             }
+				     }
+			        
+			        if (event.isStartElement()) {
+			        	if (event.asStartElement().getName().getLocalPart().equals("closeShortPosition")) {
+			        		event = eventReader.nextEvent();
+			                modifiedStock.closeShortPosition = Double.valueOf(event.asCharacters().getData());
+			                continue;
+			        	
 			             }
 				     }
 			        
