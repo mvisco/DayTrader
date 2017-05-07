@@ -12,13 +12,15 @@ public class LoginAmeritrade {
     private String password;
     private String urlstr;
     private String sourceApp;
+    private String TDAcct;
     
 
-    public LoginAmeritrade(String username, String password, String urlstr, String sourceApp) {
+    public LoginAmeritrade(String username, String password, String urlstr, String sourceApp, String TDAcct) {
     	this.username = username;
     	this.password = password;
     	this.urlstr = urlstr;
     	this.sourceApp = sourceApp;
+    	this.TDAcct = TDAcct;
     }
 	
 	public  void login() throws IOException {
@@ -40,6 +42,7 @@ public class LoginAmeritrade {
 		  SessionControl.setCompany(root.getChildwithNameNonNull("xml-log-in").getChildwithNameNonNull("accounts").getChildwithName("account").getChildwithNameNonNull("company").getValue());
 		  SessionControl.setSourceApp(sourceApp);
 		  SessionControl.setUrl(urlstr);
+		  SessionControl.setAcct(TDAcct);
 		}
 	
 	public  void logout() throws IOException {

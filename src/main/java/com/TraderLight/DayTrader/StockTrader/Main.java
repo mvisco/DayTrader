@@ -194,7 +194,7 @@ public class Main {
 				
 				if (broker.contentEquals("AMTD")) {
 				    LoginAmeritrade login = new LoginAmeritrade(sysconfig.TDLogin, sysconfig.TDPassword, 
-							sysconfig.TDAuthURL, sysconfig.TDSourceApp);
+							sysconfig.TDAuthURL, sysconfig.TDSourceApp, sysconfig.TDAcct);
 				    try {
 					    login.login();
 					   //TODO make login boolean to make sure that we logged in.. look at the result to be OK in login response
@@ -239,7 +239,7 @@ public class Main {
 						if (!rc) {
 							// login again
 							LoginAmeritrade login = new LoginAmeritrade(sysconfig.TDLogin, sysconfig.TDPassword, 
-									sysconfig.TDAuthURL, sysconfig.TDSourceApp);
+									sysconfig.TDAuthURL, sysconfig.TDSourceApp,sysconfig.TDAcct );
 						    try {
 							    login.login();
 							   //TODO make login boolean to make sure that we logged in.. look at the result to be OK in login response

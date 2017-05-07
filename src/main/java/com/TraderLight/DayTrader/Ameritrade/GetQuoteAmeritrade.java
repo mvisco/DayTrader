@@ -40,25 +40,18 @@ public class GetQuoteAmeritrade {
 		  Double imp_vol = Double.parseDouble(iv)/100.0;
 		  iv = String.valueOf(imp_vol);
 		  
-		  if (buy) {
-			  return askS;
-		  } else {
-			  return bidS;
-		  }
-		  
-		  /*
 		  if (closeTransaction) {
 				log.info("Asked to close transaction so return bid or ask");
 				if (buy) {
-					return String.valueOf(ask);
+					return askS;
 				} else {
-					return String.valueOf(bid);
+					return bidS;
 				}
 		  }
-		  */
 		  
 		  
-		  /*
+		  
+		  
 		  double bid = Double.parseDouble(bidS);
 		  double ask = Double.parseDouble(askS);
 		  double diff = Math.round( (ask-bid) * 100.0 ) / 100.0;
@@ -120,7 +113,7 @@ public class GetQuoteAmeritrade {
 	   	  }
 		  
 		  
-		  log.info("bid, ask and iv " + bid+ " " + ask + " " + iv);	
+		  //log.info("bid, ask and iv " + bid+ " " + ask + " " + iv);	
 		  
 		  // The rest of the cases we try to get in the middle except for when  buying and the spread is too high, see below
 		  quote = (Double.parseDouble(bidS) + Double.parseDouble(askS))/2;
@@ -137,7 +130,7 @@ public class GetQuoteAmeritrade {
 			quote=Math.round(quote * 100.0) / 100.0;		
 			return(String.valueOf(quote));
 			  
-		  */
+		  
 		  
 		}
 	

@@ -13,6 +13,7 @@ package com.TraderLight.DayTrader.AccountMgmt;
 
 
 
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -28,11 +29,14 @@ import com.TraderLight.DayTrader.TradeMonster.RequestOrderStatusTM;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 import com.TraderLight.DayTrader.Ameritrade.GetQuoteAmeritrade;
+import com.TraderLight.DayTrader.Ameritrade.CancelOrder;
+import com.TraderLight.DayTrader.Ameritrade.CreateOptionOrder;
+import com.TraderLight.DayTrader.Ameritrade.OrderStatus;
 
 
 /**
  *  This class manages a single order. It gets called from  AccountMgr and executes in its own thread.
- *  When the order processing is terminated, the thread terminates abd an asynchronous call to AccountMgr is performed to let it know 
+ *  When the order processing is terminated, the thread terminates and an asynchronous call to AccountMgr is performed to let it know 
  *  if the order was placed successfully or not.
  * 
  * @author Mario Visco
@@ -379,12 +383,13 @@ public class GenericOrderExecutorAMTD implements Runnable {
 			
 			optionPrice = optionQuote.getQuotes(optionSymbolAMTD,buy,closeTransaction,optionBidAskSpread);
 			iv = optionQuote.getIv();
+			/*
 			if (this.buy_sell.contentEquals("buy") ){
 				optionPrice = optionQuote.getAsk();
 			} else {
 				optionPrice = optionQuote.getBid();
 			}
-			
+			*/
 		} catch (Exception e) {
 			log.info("Something went wrong with getting quote for symbol " + optionSymbolTM);
 			e.printStackTrace();
@@ -405,34 +410,297 @@ public class GenericOrderExecutorAMTD implements Runnable {
 			return;
 		}
 	
-/*
-        String price_type="";
-		price_type="limit";
-		CreateOptionOrderTM order = new CreateOptionOrderTM();		
+		String price_type="limit";
+		
+		CreateOptionOrder order = new CreateOptionOrder();		
 		try {
-			order.createOrder(buy,lot,optionSymbolTM,optionPrice,price_type);
+			order.createOrder(buy,lot,optionSymbolAMTD,optionPrice,price_type);
 		} catch (Exception e) {
 			log.info("Order could not be created");			
 			e.printStackTrace();
 			// return failure so the strategy will go back to previous state
-			account.returnOrderParameters(false, this.symbol, this.optionSymbol, this.optionPrice, this.quantity, this.buy, this.i, this.strategy, this.leg);
+			account.optionReturnOrder(false,"", "", " ", "", buy_sell, "", strategy, iv, stockPrice );
 			return;
 		}
 		String order_id = order.getOrderID();
 		
 		log.info("order_id is " + order_id);
 		
-		
+		/*
 		if (order_id.contentEquals("")) {
 			// Something went wrong we got an empty string. So return failure to account manager
 			log.info("order_id is an empty string");
-			account.returnOrderParameters(false, this.symbol, this.optionSymbol, this.optionPrice, this.quantity, this.buy, this.i, this.strategy, this.leg);
+			account.returnOrderParameters(false, this.symbol, this.optionSymbol, this.optionPrice, this.quantity, this.buy, this.i, this.strategy);
 			return;
 			
 		}
+		*/
 		
-		checkOrderCompletion(order_id,5);
-*/		
+		// wait for 20 seconds before checking the order status
+		try {
+			Thread.currentThread();
+			Thread.sleep(20000);
+		} catch (InterruptedException e1) {
+			log.info("Something went wrong in setting the 10 sec sleep");
+			//keep going 
+			e1.printStackTrace();
+		}
+		
+		// check order status
+		
+		OrderStatus order_status = new OrderStatus();
+		String status = "";
+		try {
+			status = order_status.requestStatus(order_id);
+		} catch (Exception e) {
+			log.info("Cannot request status on order_id " + order_id);
+			//keep going
+			e.printStackTrace();
+		}
+		
+		if (status.contentEquals("Filled")) {
+			//order has been filled. return Success 
+			account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+			return;
+			
+		} 
+		
+		// if we are here it means that the order has not been filled yet so the question is what to do next ?
+		// let's wait  a total of 5 minutes checking every 50 seconds to see if the order has been filled. 
+		// We are waiting to see if the market comes to us....... 
+		
+		int fiveMinutes = 60000*5;
+		int sleepTime = 50000;
+		int iterationLoop = fiveMinutes/sleepTime;  //  this is 6
+		
+		for (int i = 1; i<= iterationLoop; i++ ) {
+		
+		    try {
+			    Thread.sleep(sleepTime);
+			
+		    } catch (InterruptedException e1) {
+			    log.info("Something went wrong in setting the 10 seconds sleep");
+			    e1.printStackTrace();
+		    }
+		
+		    try {
+			    status = order_status.requestStatus(order_id);
+		    } catch (Exception e) {
+			    log.info("Cannot request status on order_id " + order_id);
+			    e.printStackTrace();
+		    }
+		
+		    if (status.contentEquals("Filled" )) {
+			   //order has been filled. return Success 
+		    	account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+			   return;
+			
+		    }
+		    
+		    // We have to deal with partial fills....
+		    
+		    if (i==iterationLoop) {
+				//  This is the last time we check for order status. It is possible that the order has been partially filled
+		    	int q = 0;
+		    	 if (status.contentEquals("Open" )) {
+		    		 try {
+						 q = order_status.checkPartialFill(order_id);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+		    		if (q > 0 ) {
+		    			// order has been partially filled, so the following is the processing for partial fills
+		    			String pQuantity = Integer.toString(q);
+		    			 if (!closeTransaction){
+		    				 
+		    				 CancelOrder cancel = new CancelOrder();
+		    				   try {
+		    					   cancel.requestOrderCancel(order_id);
+		    				   } catch (Exception e) {
+		    					//cannot cancel the order, exit program there are problems. If we do not exit we may have loops of posting orders
+		    					// because the strategy will continue to ask to buy or sell when it goes into the previous state
+		    					log.info("Cannot cancel the order......check manually to see what happened");
+		    					log.info("Exiting program..........");
+		    					e.printStackTrace();
+		    					System.exit(0);
+		    				   }
+		    				   
+		    				   try {
+								    Thread.sleep(10000);
+								
+							       } catch (InterruptedException e1) {
+								       log.info("Something went wrong in setting the 10 seconds sleep");
+								        e1.printStackTrace();
+							       }
+		    				   try {
+		    					    status = order_status.requestStatus(order_id);
+		    				    } catch (Exception e) {
+		    					    log.info("Cannot request status on order_id " + order_id);
+		    					    e.printStackTrace();
+		    				    }
+		    				
+		    				   // race condition we tried to cancel but the order has been filled
+		    				    if (status.contentEquals("Filled" )) {
+		    					   //order has been filled. return Success 
+		    				    	account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+		    					   return;
+		    					
+		    				    }
+		    				    
+		    				    // order has been cancelled so return the partial fill to acct mgr
+		    				    account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, pQuantity, open_close_update, strategy, iv, stockPrice);
+		    				    return;
+		    				   
+				         } else {
+				    	     // close transaction case 
+				    	     // just set the new quantity to place an order at the market for the remaining quantity; the code below will take care of it.
+				    	     this.lot=Integer.toString( ((Integer.parseInt(quantity) - Integer.parseInt(pQuantity))/100) );				    					    	
+				    	
+				         }
+		    			 
+		    		}
+		    		
+		    	 }
+		    	
+		    	
+		    	
+		    }
+		    
+		}
+			   
+			   
+			   
+			   
+		if (!closeTransaction){
+			
+			   //cancel order and return failure
+			   CancelOrder cancel = new CancelOrder();
+			   try {
+				   cancel.requestOrderCancel(order_id);
+			   } catch (Exception e) {
+				//cannot cancel the order, exit program there are problems. If we do not exit we may have loops of posting orders
+				// because the strategy will continue to ask to buy or sell when it goes into the previous state
+				log.info("Cannot cancel the order......check manually to see what happened");
+				log.info("Exiting program..........");
+				e.printStackTrace();
+				System.exit(0);
+			   }
+			   // Wait for 20 seconds and make sure that the order is cancelled
+			   try {
+				Thread.sleep(10000);
+				
+			   } catch (InterruptedException e1) {
+				   log.info("Something went wrong in setting the 10 seconds sleep");
+				    e1.printStackTrace();
+			   }
+			   try {
+				   status = order_status.requestStatus(order_id);
+				   log.info("Status is " + status);
+			   } catch (Exception e) {
+				log.info("Cannot request status on order_id " + order_id);
+				e.printStackTrace();
+			   }
+			   // There may be a race condition for which the order has been filled anyway even if we tried to cancel if so return success
+			   // otherwise the method  will return failure on its own 
+			   if (status.contentEquals("Filled" )) {				
+				   account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+				  return;				
+			   }
+									
+		} else {
+			// cancel the order and place a market order
+			   
+			   CancelOrder cancel = new CancelOrder();
+			   try {
+				   cancel.requestOrderCancel(order_id);
+			   } catch (Exception e) {
+				//cannot cancel the order, exit program there are problems. If we do not exit we may have loops of posting orders
+				// because the strategy will continue to ask to buy or sell when it goes into the previous state
+				log.info("Cannot cancel the order......check manually to see what happened");
+				log.info("Exiting program..........");
+				e.printStackTrace();
+				System.exit(0);
+			   }
+			   // Wait for 10 seconds and make sure that the order is cancelled
+			   try {
+				Thread.sleep(10000);
+				
+			   } catch (InterruptedException e1) {
+				   log.info("Something went wrong in setting the 10 seconds sleep");
+				    e1.printStackTrace();
+			   }
+			   try {
+				   status = order_status.requestStatus(order_id);
+				   log.info("Status is " + status);
+			   } catch (Exception e) {
+				log.info("Cannot request status on order_id " + order_id);
+				e.printStackTrace();
+			   }
+			   // There may be a race condition for which the order has been filled anyway even if we tried to cancel if so return success
+			   // otherwise the method  will return failure on its own 
+			   if (status.contentEquals("Filled" )) {				
+				   account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+				  return;				
+			   }
+			   
+			   // assume that order has been canceled if we get here and place a market order
+				price_type="market";
+				
+				CreateOptionOrder order1 = new CreateOptionOrder();		
+				try {
+					order1.createOrder(buy,lot,optionSymbolAMTD,optionPrice,price_type);
+				} catch (Exception e) {
+					log.info("Order could not be created");			
+					e.printStackTrace();
+					// return failure so the strategy will go back to previous state
+					account.optionReturnOrder(false,"", "", " ", "", buy_sell, "", strategy, iv, stockPrice );
+					return;
+				}
+				String order_id1 = order1.getOrderID();
+				
+				log.info("order_id is " + order_id1);
+				
+				/*
+				if (order_id.contentEquals("")) {
+					// Something went wrong we got an empty string. So return failure to account manager
+					log.info("order_id is an empty string");
+					account.returnOrderParameters(false, this.symbol, this.optionSymbol, this.optionPrice, this.quantity, this.buy, this.i, this.strategy);
+					return;
+					
+				}
+				*/
+				
+				// we have a market order do not cancel we just have to wait until is filled
+				while (true) {
+					
+					try {
+						 Thread.sleep(20000);
+								
+						} catch (InterruptedException e1) {
+							log.info("Something went wrong in setting the 20 seconds sleep");
+							e1.printStackTrace();
+						}
+					try {
+						   status = order_status.requestStatus(order_id1);
+						   log.info("Status is " + status);
+					   } catch (Exception e) {
+						log.info("Cannot request status on order_id " + order_id1);
+						e.printStackTrace();
+					   }
+					   // There may be a race condition for which the order has been filled anyway even if we tried to cancel if so return success
+					   // otherwise the method  will return failure on its own 
+					   if (status.contentEquals("Filled" )) {				
+						   account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+						  return;				
+					   }
+				}	
+			
+		}
+		// if we get here return failure 
+		account.optionReturnOrder(false,"", "", " ", "", buy_sell, "", strategy, iv, stockPrice );
+		return;
+				
 	}
 		
 

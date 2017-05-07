@@ -35,6 +35,7 @@ public class SystemConfig {
 	String TDPassword;
 	String TDSourceApp;
 	String TDAuthURL;
+	String TDAcct;
 	boolean mock;
 	boolean useDB;
 	String qtURL;
@@ -77,6 +78,7 @@ public class SystemConfig {
 				sysConfig.TDPassword = properties.getProperty("TDPassword");
 				sysConfig.TDAuthURL= properties.getProperty("TDAuthURL");
 				sysConfig.TDSourceApp = properties.getProperty("TDSourceApp");
+				sysConfig.TDAcct = properties.getProperty("TDAcct");
 				if (properties.getProperty("mock").contains("true")) {
 					sysConfig.mock=true;
 				} else {

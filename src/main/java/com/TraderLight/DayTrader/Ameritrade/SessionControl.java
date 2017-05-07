@@ -8,6 +8,7 @@ public class SessionControl {
 	private static String company;
 	private static String sourceApp;
 	private static String url;
+	private static String acct;
 	
 	public static String getUrl() {
 		return url;
@@ -51,6 +52,14 @@ public class SessionControl {
 
 	public static String getSegment() {
 		return segment;
+	}
+
+	public static String getAcct() {
+		return acct;
+	}
+
+	public static void setAcct(String acct) {
+		SessionControl.acct = acct;
 	}
 	
 	
