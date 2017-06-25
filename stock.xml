@@ -3,9 +3,9 @@
   <stock>
     <symbol>GOOGL</symbol>
     <change>5</change>
-    <profit>3.5</profit>
-    <loss>5</loss>
-    <lot>100</lot> 
+    <profit>5</profit>
+    <loss>3</loss>
+    <lot>1000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -14,16 +14,16 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>5</strategy>
-    <impVol>0.20</impVol>
+    <strategy>9</strategy>
+    <impVol>0.15</impVol>
     <tradeable>false</tradeable>
   </stock>
   <stock>
    <symbol>AAPL</symbol>
-    <change>0.5</change>
-    <profit>0.3</profit>
-    <loss>0.35</loss>
-    <lot>800</lot> 
+    <change>0.30</change>
+    <profit>0.60</profit>
+    <loss>0.4</loss>
+    <lot>1000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -33,15 +33,15 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>5</strategy>
-    <impVol>0.20</impVol>
-    <tradeable>false</tradeable>
+    <impVol>0.15</impVol>
+    <tradeable>true</tradeable>
   </stock>
   <stock>
     <symbol>MSFT</symbol>
-    <change>0.4</change>
-    <profit>0.2</profit>
-    <loss>0.3</loss>
-    <lot>1500</lot> 
+    <change>0.25</change>
+    <profit>0.25</profit>
+    <loss>0.2</loss>
+    <lot>10000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -50,8 +50,8 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>5</strategy>
-    <impVol>0.20</impVol>
+    <strategy>9</strategy>
+    <impVol>0.15</impVol>
     <tradeable>false</tradeable>
   </stock>
   <stock>
@@ -92,9 +92,45 @@
   </stock>
   <stock>
     <symbol>QQQ</symbol>
-    <change>0.01</change>
-    <profit>0.01</profit>
-    <loss>0.01</loss>
+    <change>0.15</change>
+    <profit>0.30</profit>
+    <loss>0.5</loss>
+    <lot>1000</lot> 
+    <closePosition>false</closePosition>
+    <openLongPosition>false</openLongPosition>
+    <openShortPosition>false</openShortPosition>
+    <openLongPositionWithPrice>false</openLongPositionWithPrice>
+    <priceForLongPosition>0</priceForLongPosition>
+    <openShortPositionWithPrice>false</openShortPositionWithPrice>
+    <priceForShortPosition>0</priceForShortPosition>
+    <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
+    <strategy>5</strategy>
+    <impVol>0.1</impVol>
+    <tradeable>true</tradeable>
+  </stock>
+  <stock>
+    <symbol>AMZN</symbol>
+    <change>6</change>
+    <profit>3.5</profit>
+    <loss>5</loss>
+    <lot>1000</lot> 
+    <closePosition>false</closePosition>
+    <openLongPosition>false</openLongPosition>
+    <openShortPosition>false</openShortPosition>
+    <openLongPositionWithPrice>false</openLongPositionWithPrice>
+    <priceForLongPosition>0</priceForLongPosition>
+    <openShortPositionWithPrice>false</openShortPositionWithPrice>
+    <priceForShortPosition>0</priceForShortPosition>
+    <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
+    <strategy>9</strategy>
+    <impVol>0.20</impVol>
+    <tradeable>false</tradeable>
+  </stock>
+  <stock>
+    <symbol>NFLX</symbol>
+    <change>0.9</change>
+    <profit>0.5</profit>
+    <loss>0.6</loss>
     <lot>10000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
@@ -104,52 +140,16 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>6</strategy>
-    <impVol>0.20</impVol>
-    <tradeable>true</tradeable>
-  </stock>
-  <stock>
-    <symbol>AMZN</symbol>
-    <change>7</change>
-    <profit>3.5</profit>
-    <loss>5</loss>
-    <lot>100</lot> 
-    <closePosition>false</closePosition>
-    <openLongPosition>false</openLongPosition>
-    <openShortPosition>false</openShortPosition>
-    <openLongPositionWithPrice>false</openLongPositionWithPrice>
-    <priceForLongPosition>0</priceForLongPosition>
-    <openShortPositionWithPrice>false</openShortPositionWithPrice>
-    <priceForShortPosition>0</priceForShortPosition>
-    <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>5</strategy>
-    <impVol>0.20</impVol>
-    <tradeable>false</tradeable>
-  </stock>
-  <stock>
-    <symbol>NFLX</symbol>
-    <change>1.2</change>
-    <profit>1.2</profit>
-    <loss>0.6</loss>
-    <lot>450</lot> 
-    <closePosition>false</closePosition>
-    <openLongPosition>false</openLongPosition>
-    <openShortPosition>false</openShortPosition>
-    <openLongPositionWithPrice>false</openLongPositionWithPrice>
-    <priceForLongPosition>0</priceForLongPosition>
-    <openShortPositionWithPrice>false</openShortPositionWithPrice>
-    <priceForShortPosition>0</priceForShortPosition>
-    <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>4</strategy>
+    <strategy>9</strategy>
     <impVol>0.30</impVol>
     <tradeable>false</tradeable>
   </stock>
    <stock>
     <symbol>FB</symbol>
-    <change>0.7</change>
-    <profit>0.35</profit>
-    <loss>0.7</loss>
-    <lot>700</lot> 
+    <change>0.4</change>
+    <profit>0.8</profit>
+    <loss>0.4</loss>
+    <lot>1000</lot> 
     <closePosition>false</closePosition>
     <openLongPosition>false</openLongPosition>
     <openShortPosition>false</openShortPosition>
@@ -159,8 +159,8 @@
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
     <strategy>5</strategy>
-    <impVol>0.20</impVol>
-    <tradeable>false</tradeable>
+    <impVol>0.15</impVol>
+    <tradeable>true</tradeable>
   </stock>
   <stock>
     <symbol>SPY</symbol>

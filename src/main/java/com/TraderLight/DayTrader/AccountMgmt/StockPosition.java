@@ -42,13 +42,16 @@ public class StockPosition {
 	
 	public void updatePosition(int q, double price) {
 		
-		// this assumes update is of the same quantity that we currently have
-		this.quantity = this.quantity+q;
 		if (long_short) {
-			this.priceBought = (priceBought+price)/2.0;
+			this.priceBought = ((priceBought*quantity) +(price*q))/(quantity+q);
 		} else {
-			this.priceSold = (priceSold+price)/2.0;
-		}		
+			this.priceSold = ((priceSold*quantity) +(price*q))/(quantity+q);
+		}
+		this.quantity = this.quantity+q;
+	}
+	
+	public void decreaseQuantity( int q) {
+		this.quantity -= q;
 	}
 	
 	public void closePosition(double p) {

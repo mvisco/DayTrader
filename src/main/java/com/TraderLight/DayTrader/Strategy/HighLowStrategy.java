@@ -273,7 +273,7 @@ public class HighLowStrategy extends Strategy{
 				    account.buy_or_sell(BUY, CLOSE, quote, lot, this);
 				    // We clear the mean at the end of every cycle
 				    clearMean();
-				} else if ((currentBid >= (this.price+(2*this.objective_change)*currentPrice)) ){
+				} else if ((currentBid >= (this.price+(this.objective_change)*currentPrice)) ){
 					if (display) {
 					   log.info("State S1:  attempting to sell another lot of stocks for symbol: " + quote.getSymbol() + " at bid " + currentBid);
 					   log.info("Date is " + getDate);
@@ -284,18 +284,13 @@ public class HighLowStrategy extends Strategy{
 					this.possiblePrice=(this.price+currentBid)/2.0;				
 					account.buy_or_sell(SELL, UPDATE, quote, lot, this);
 				}
-				
-				
-            
-            
+				           
 		    break;
 		    
 		case S2: 
 			
 			// we are in this state because we bought one lot
-			// close position if we made "profit" or we lost "loss"
-						
-           
+			// close position if we made "profit" or we lost "loss"         
             	
 				if (currentAsk >= (this.price+(this.profit*currentPrice))) {
 					if (display) {
@@ -332,18 +327,18 @@ public class HighLowStrategy extends Strategy{
 				if ( (currentAsk <= this.price-this.profit) ) {
 					if (display)
 					    log.info("State S3 attempting to close position at profit on symbol" + quote.getSymbol());
-					    this.desiredState=States.S0;
+					    //this.desiredState=States.S0;
 				} else {
 					if (display) {
 					    log.info("State S3 attempting to close position at loss on symbol" + quote.getSymbol());
-					    this.desiredState=States.S0Trend;
-					    //min = Double.MAX_VALUE;
-					    //max = Double.MIN_VALUE;
+					   // this.desiredState=States.S0Trend;
+					   min = Double.MAX_VALUE;
+					   max = Double.MIN_VALUE;
 					}
 				}
 				
 				this.currentState = States.S3;
-				//this.desiredState=States.S0;
+				this.desiredState=States.S0;
 				this.StrategyState = States.STemp;
 				this.possiblePrice = 0;				
 				account.buy_or_sell(BUY, CLOSE, quote, lot, this);
@@ -362,17 +357,17 @@ public class HighLowStrategy extends Strategy{
 					if (currentBid >= (this.price+this.profit)) {
 						if (display) 
 						     log.info("State S4 attempting to close position at profit on symbol" + quote.getSymbol());
-						     this.desiredState = States.S0;
+						     //this.desiredState = States.S0;
 					} else { 
 						if (display)
 						     log.info("State S4 attempting to close position at loss on symbol" + quote.getSymbol());
-						     this.desiredState = States.S0Trend;
-						    //min = Double.MAX_VALUE;
-						  //  max = Double.MIN_VALUE;
+						     //this.desiredState = States.S0Trend;
+						    min = Double.MAX_VALUE;
+						    max = Double.MIN_VALUE;
 					}
 	            					
 					this.currentState = States.S4;
-					//this.desiredState=States.S0;
+					this.desiredState=States.S0;
 					this.StrategyState = States.STemp;
 					this.possiblePrice = 0;	
 					account.buy_or_sell(SELL, CLOSE, quote, lot, this);

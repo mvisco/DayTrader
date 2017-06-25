@@ -23,7 +23,7 @@ public class OptionCostProvider {
 		//S is the current stock price
 		// X is exercise price
 		// T is in days of fraction of days
-		 log.info("Getting Call Price: " + "S " + S + " X " + X + " T "+ T);
+		// log.info("Getting Call Price: " + "S " + S + " X " + X + " T "+ T);
 		
 		return BlackScholes.generalizedCallPrice(S, X, r, sigma, T, d);
 		
@@ -34,7 +34,7 @@ public class OptionCostProvider {
 		//S is the current stock price
 		// X is exercise price
 		// T is in days of fraction of days
-		log.info("Getting Put Price: " + "S " + S + " X " + X + " T "+ T);
+		//log.info("Getting Put Price: " + "S " + S + " X " + X + " T "+ T);
 		return BlackScholes.generalizedPutPrice(S, X, r, sigma, T, d);
 		
 	}

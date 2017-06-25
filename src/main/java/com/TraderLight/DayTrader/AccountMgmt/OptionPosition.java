@@ -68,6 +68,12 @@ public class OptionPosition {
 		
 	}
 	
+   public void updateQuantity(int quantity) {
+		
+		this.quantity += quantity;
+		
+	}
+	
 	
 
 }

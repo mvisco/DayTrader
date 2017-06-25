@@ -21,11 +21,15 @@ import com.TraderLight.DayTrader.AccountMgmt.OptionPosition;
 import com.TraderLight.DayTrader.AccountMgmt.StockPosition;
 import com.TraderLight.DayTrader.MarketDataProvider.GetFromStorageJDBC;
 import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
+import com.TraderLight.DayTrader.Strategy.GammaScalping;
 import com.TraderLight.DayTrader.Strategy.HighLowStrategy;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
+import com.TraderLight.DayTrader.Strategy.MeanReversionNEq2;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategyNeq2;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategyNeq4;
+import com.TraderLight.DayTrader.Strategy.NeutralStrategy;
+import com.TraderLight.DayTrader.Strategy.NeutralStrategy2;
 import com.TraderLight.DayTrader.Strategy.NewMeanReversion;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 import com.TraderLight.DayTrader.Strategy.TrendStrategy;
@@ -63,8 +67,8 @@ public class MainSimulation {
         }
 		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd");
-		String initialDate = "2016-1-08";
-		String finalDate = "2016-04-30";
+		String initialDate = "2016-11-01";
+		String finalDate = "2016-11-31";
 		Date iDate=null;
 		try {
 			iDate = sdf.parse(initialDate);
@@ -90,8 +94,8 @@ public class MainSimulation {
 		String[] tempDate;	
 		
 		// set the time to add to query DB on
-		String initialTimeMorning = "07:31:00";
-		String finalTimeMorning = "07:31:30";
+		String initialTimeMorning = "07:29:00";
+		String finalTimeMorning = "07:29:30";
 		String initialTimeAfternoon = "13:59:54";
 		String finalTimeAfternoon = "13:59:59";
 		
@@ -147,8 +151,6 @@ public class MainSimulation {
 		}
 		
 		
-		
-		
         if (initialDayIndex.size() == 0) {
         	log.info("There are no days to run the simulation on............................");
         	System.exit(0);
@@ -159,10 +161,10 @@ public class MainSimulation {
         capital_available=sysconfig.capital;
         maxNumberOfPositions=sysconfig.maxNumberOfPositions;
         
-        Stock.populateStock("QQQ.xml");
+        Stock.populateStock("stock.xml");
         List<Stock> listOfStocks = Stock.getListOfStocks();
 				
-		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock, true);
+		AccountMgr account= new AccountMgr(sysconfig.maxNumberOfPositions, sysconfig.mock, false);
 		
         // populate broker and inform AccountMgr
         broker = args[0];
@@ -232,6 +234,21 @@ public class MainSimulation {
 		   } else if ( stock.getStrategyID() == 6) {
 				Strategy strategy = new HighLowStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
 						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector(), stock.trend);
+				stock.setStrategy(strategy);
+				
+		   } else if ( stock.getStrategyID() == 7) {
+				Strategy strategy = new NeutralStrategy2(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
+				stock.setStrategy(strategy);
+				
+		   } else if ( stock.getStrategyID() == 8) {
+				Strategy strategy = new GammaScalping(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
+				stock.setStrategy(strategy);
+				
+		   } else if ( stock.getStrategyID() == 9) {
+				Strategy strategy = new MeanReversionNEq2(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), stock.getVolumeVector());
 				stock.setStrategy(strategy);
 		   
 		   } else {
@@ -305,14 +322,42 @@ public class MainSimulation {
 			    		}
 			    		continue;
 			    	}
+			    	
+			    	
 
 			    	// send quote to strategy
 			    	if (mapOfStocks.containsKey(newQuote.getSymbol())) {
 			    		mapOfStocks.get(newQuote.getSymbol()).getStrategy().stateTransition(newQuote);
 
 			    	}
-
+			    	/*
+			    	double portfolioValue = 0;
+			    	if (newQuote.getSymbol().contentEquals("QQQ")) {
+			    	  portfolioValue = account.getPortfolioValue(newQuote, mapOfStocks.get(newQuote.getSymbol()).getStrategy());
+			    	}
+					if (portfolioValue != 0) {
+						
+					    log.info("Portfolio value " + portfolioValue);
+			        }
+					*/
 			    }
+					/*
+					if ( portfolioValue > 400 ) {
+						log.info("Attempting to close positions at profit");
+						lastQuote = newQuote;
+						  if ( (newQuote == null) || newQuote.getSymbol().contentEquals("") ) {
+						      continue;
+						   }
+						   if (mapOfStocks.containsKey(newQuote.getSymbol()) && (mapOfStocks.get(newQuote.getSymbol()).getTradeable()==true)) {
+								mapOfStocks.get(newQuote.getSymbol()).getStrategy().closePositions(newQuote);
+								
+						   }
+						  continue;
+						}
+						*/
+					
+
+			    
 
 /*
 			    for (int i = morningOpenIndex;i < closeOpeningIndex  ;i++ ) {
@@ -346,6 +391,7 @@ public class MainSimulation {
 			    account.analyzeTrades(true);
 			    if (! account.getTradeOption()) {
 				    allTrades.put(tradeDay, account.getStockPosition());
+				    //optionAllTrades.put(tradeDay,  account.getDayTrades());
 				    createTradingStats(lastQuote.getCurrentDateTime(),account.getStockPosition());
 			    } else {
 			    	optionAllTrades.put(tradeDay,  account.getDayTrades());
@@ -360,8 +406,9 @@ public class MainSimulation {
 				log.info(" Done with the day " + lastQuote.getCurrentDateTime());
 				
 				for (Stock stock : listOfStocks) {
-					stock.strategy.setStateToS0();
+					//stock.strategy.setStateToS0();
 					stock.strategy.clearMean();
+					stock.strategy.setTradeableFlag(stock.getTradeable());
 				}
 				
 				/*
@@ -388,6 +435,7 @@ public class MainSimulation {
 					// this is the end so analyze all trades
 					if (! account.getTradeOption()) {
 					    analyzeAllTrades();
+					    //optionAnalyzeAllTrades();
 					} else {
 						optionAnalyzeAllTrades();
 					}
@@ -539,9 +587,9 @@ public class MainSimulation {
 		int month;
 		
 		String[] idateArray = initialDate.split("-");
-		
+		month = Integer.parseInt(idateArray[1]);
 		if (idateArray[0].contentEquals("2016")) {			
-			month = Integer.parseInt(idateArray[1]);
+			
 			if (month <= 4 ) {
 				db = "traderlight2016-1";
 			} else if (month <= 8 ){
@@ -551,13 +599,18 @@ public class MainSimulation {
 			}
 			
 		} else if (idateArray[0].contentEquals("2015")) {
-			month = Integer.parseInt(idateArray[1]);
+			
 			if (month <= 6 ) {
 				db = "traderlight2015";
 			} else {
 				db = "traderlight2015-2";
 			}
-		
+		} else if (idateArray[0].contentEquals("2017")) {
+			if (month <= 4 ) {
+				db = "traderlight2017-1";
+			} else {
+				db = "traderlight2017-2";
+			}
 		} else {
 			db = "traderlight2014";
 		}	

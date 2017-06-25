@@ -54,6 +54,8 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 	private final String BUY = "buy";
 	private final String SELL = "sell";
 	
+	StrategyMeanAnalysis meanAnalysis;
+	
 	
 	public MeanReversionStrategyNeq4(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
 			double profit, double impVol, List<Integer> v) {
@@ -71,6 +73,7 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 		this.longPositionPrice = Double.MIN_VALUE;
 		this.account = account;
 		this.count = 0;
+		meanAnalysis = new StrategyMeanAnalysis();
 	}
 	
 	@Override
@@ -108,9 +111,12 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 			return;			
 		}
 		
-		mean = calculateMean(quote, lastQuote);
+        mean = calculateMean(quote, lastQuote);
 		lastQuote=quote;	
 	
+		meanAnalysis.addQuote(quote);
+		
+		
 		if (this.isTradeable == false) {
 			return;
 		}
@@ -148,7 +154,7 @@ public class MeanReversionStrategyNeq4 extends Strategy{
             log.info("        ");
 		//}
 		// Do not trade before 7:35
-		if ( (hours == 7) && (minutes <= 34) ) {
+		if ( (hours == 7) && (minutes <= 30) ) {
 			//log.info("Not time yet to trade, time is: " + quote.getCurrentDateTime());
 			return;
 		}	
@@ -167,8 +173,17 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 				return;
 			}
 			
+			/*
 			
-		    if ( ((currentBid >= (mean + this.objective_change) ) && ((currentBid - this.previousClose) >= this.objective_change))
+			if ((hours >=8)) { 
+					if (meanAnalysis.didMeanRevert()) {				
+				         log.info("Mean Reverted we are done trading for symbol " + symbol );
+				         return;
+					}
+			}
+			*/
+			
+		    if ( ((currentBid >= (mean + this.objective_change) ))
 		    		|| (openShortPositionWithPrice && (currentBid >= shortPositionPrice)) ){
 	
 		    	if (display) {
@@ -185,7 +200,7 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 			// We open a position if the value goes below  the mean by objective_change in automatic fashion 
 			// or if there is a manual  intervention that tells us to open a long position
 		    			    	
-		    } else if ( ((currentAsk <= (mean - this.objective_change)) && ((this.previousClose - currentAsk) >= this.objective_change)) 
+		    } else if ( ((currentAsk <= (mean - this.objective_change)) ) 
 		    		|| (openLongPositionWithPrice && (currentAsk <= longPositionPrice)) ) {
 		    	if (display) {	
 				    log.info("State S0  attempting to buy  one lot of stocks for symbol: " + quote.getSymbol()+ " at ask " + currentAsk);
@@ -220,8 +235,9 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 				    this.possiblePrice = 0;				
 				    account.buy_or_sell(BUY, CLOSE, quote, lot, this);
 				    // We clear the mean at the end of every cycle
+				    this.isTradeable = false;
 				    clearMean();
-				} else if ((currentBid >= (this.price+this.objective_change)) ){
+				} else if ((currentBid >= (mean+3*this.objective_change)) ){
 					if (display) {
 					   log.info("State S1:  attempting to sell another lot of stocks for symbol: " + quote.getSymbol() + " at bid " + currentBid);
 					   log.info("Date is " + getDate);
@@ -234,9 +250,7 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 					account.buy_or_sell(SELL, UPDATE, quote, lot, this);
 				}
 				
-				
-            
-            
+           
 		    break;
 		    
 		case S2: 
@@ -256,8 +270,9 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 				    this.possiblePrice = 0;	
 				    account.buy_or_sell(SELL, CLOSE, quote, lot, this);
 				    // We clear the mean at the end of every cycle
+				    this.isTradeable = false;
 				    clearMean(); 
-				} else if (currentAsk <= (this.price - this.objective_change) ){
+				} else if (currentAsk <= (mean - 3*this.objective_change) ){
 					
 					if (display) {
 					    log.info("State S2  attempting to buy  another lot of stocks for symbol: " + quote.getSymbol()+ " at ask " + currentAsk);
@@ -271,7 +286,6 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 					account.buy_or_sell(BUY, UPDATE, quote, lot, this);
 					
 				}				         		    	
-		    
             
 		    break;
 		    
@@ -287,14 +301,9 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 				account.buy_or_sell(BUY, CLOSE, quote, lot, this);
 				// We clear the mean at the end of every cycle
 				clearMean();
-			} else if (currentAsk <= (this.secondPrice - profit)) {
-				log.info("State S3 attempting to close one leg  at profit on symbol" + quote.getSymbol());
-				this.currentState = States.S3;
-				this.desiredState=States.S1;
-				this.StrategyState = States.STemp;
-				this.possiblePrice = this.firstPrice;				
-				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
-			} else  if ( (currentAsk > (this.price + objective_change)  )) {
+				this.isTradeable = false;
+				
+			} else  if ( (currentAsk > (mean + 4*objective_change)  )) {
 				log.info("State S3 attempting to sell another lot on symbol" + quote.getSymbol());
 				this.currentState = States.S3;
 				this.desiredState=States.S5;
@@ -319,16 +328,9 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 					account.buy_or_sell(SELL, CLOSE, quote, lot, this);
 					// We clear the mean at the end of every cycle
 					clearMean();
-			 } else if (currentBid >= (this.secondPrice + profit)) {
-				    log.info("State S4 attempting to close one leg at profit on symbol" + quote.getSymbol());            					
-					this.currentState = States.S4;
-					this.desiredState=States.S2;
-					this.StrategyState = States.STemp;
-					this.possiblePrice = this.firstPrice;
-					account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
-				 
-				 
-			 }  else if ( (currentBid < this.price-(this.objective_change)) ){
+					this.isTradeable = false;
+			
+			 }  else if ( (currentBid < mean-4*(this.objective_change)) ){
 			    	log.info("State S4 attempting to buy another lot on symbol" + quote.getSymbol());
 			    	this.currentState = States.S4;
 					this.desiredState=States.S6;
@@ -351,19 +353,11 @@ public class MeanReversionStrategyNeq4 extends Strategy{
         		this.desiredState=States.S0;
         		this.StrategyState = States.STemp;
         		this.possiblePrice = 0;
-        		
+        		this.isTradeable = false;
         		clearMean();
         		
-            } else if (currentAsk <= (this.thirdPrice - profit)) {
-				log.info("State S5 attempting to close one leg  at profit on symbol" + quote.getSymbol());
-				this.currentState = States.S5;
-				this.desiredState=States.S3;
-				this.StrategyState = States.STemp;
-				this.possiblePrice=(this.firstPrice + this.secondPrice)/(2.0);
-				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
-            
-            
-            } else  if ( (currentAsk > (this.price + objective_change)  )) {
+           
+            } else  if ( (currentAsk > (mean + 5*objective_change)  )) {
 		    			    	
 		    	
             	log.info("State S5 attempting to sell  4 more lots  for symbol: " + quote.getSymbol()); 
@@ -388,23 +382,15 @@ public class MeanReversionStrategyNeq4 extends Strategy{
            		log.info("State S6 attempting to close position at profit on symbol" + quote.getSymbol());
            		//log.info("Thread ID is: " + Thread.currentThread().getId());
 				
-           		this.currentState = States.S4;
+           		this.currentState = States.S6;
            		this.desiredState=States.S0;
            		this.StrategyState = States.STemp;
            		this.possiblePrice = 0;	
            		account.buy_or_sell(SELL, CLOSE, quote, lot, this);
            		clearMean();
+           		this.isTradeable = false;
 	       
-	        } else if (currentBid >= (this.thirdPrice + profit)) {
-				log.info("State S6 attempting to close one leg  at profit on symbol" + quote.getSymbol());
-				this.currentState = States.S6;
-				this.desiredState=States.S4;
-				this.StrategyState = States.STemp;
-				this.possiblePrice=(this.firstPrice + this.secondPrice)/(2.0);
-				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");		
-           
-	       
-	       } else if ( (currentBid < this.price-(this.objective_change)) ){
+	       } else if ( (currentBid < mean-5*(this.objective_change)) ){
 	    	   
 	    	  
 	    	   log.info("State is S6 attempting to buy 4 more  lots of calls for symbol: " + quote.getSymbol()); 
@@ -420,9 +406,7 @@ public class MeanReversionStrategyNeq4 extends Strategy{
 			    	
           	
 	       }
-			
-			
-			
+					
 			break;
 			
 			
@@ -434,16 +418,8 @@ public class MeanReversionStrategyNeq4 extends Strategy{
           		this.StrategyState = States.STemp;
           		this.possiblePrice = 0;
           		account.buy_or_sell(BUY, CLOSE, quote, lot, this);
-          		clearMean();
-           
-           
-           } else if (currentAsk <= (this.fourthPrice - profit)) {
-				log.info("State S7 attempting to close one leg  at profit on symbol" + quote.getSymbol());
-				this.currentState = States.S7;
-				this.desiredState=States.S5;
-				this.StrategyState = States.STemp;
-				this.possiblePrice=( (this.firstPrice + this.secondPrice)/(2.0) + this.thirdPrice)/2.0;
-				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
+          		clearMean();          
+          		this.isTradeable = false;
            }
 			
 			break;		
@@ -461,13 +437,7 @@ public class MeanReversionStrategyNeq4 extends Strategy{
            		this.possiblePrice = 0;	
            		account.buy_or_sell(SELL, CLOSE, quote, lot, this);
            		clearMean();
-	        }  else if (currentBid >= (this.fourthPrice + profit)) {
-				log.info("State S8 attempting to close one leg  at profit on symbol" + quote.getSymbol());
-				this.currentState = States.S8;
-				this.desiredState=States.S6;
-				this.StrategyState = States.STemp;
-				this.possiblePrice=( (this.firstPrice + this.secondPrice)/(2.0) + this.thirdPrice)/2.0;
-				account.sellOptionOneLeg(quote, quote.getSymbol(), this, "sell");
+           		this.isTradeable = false;
            }
 			
 			
@@ -724,6 +694,13 @@ public class MeanReversionStrategyNeq4 extends Strategy{
     	this.loss = loss;
 		return;
 	}
+    
+    
+    
+    
+    
+    
+    
 
  /*
     @Override
