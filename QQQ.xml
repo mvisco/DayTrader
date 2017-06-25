@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <config>
   <stock>
-    <symbol>QQQ</symbol>
-    <change>0.004</change>
-    <profit>0.004</profit>
-    <loss>0.004</loss>
+    <symbol>AAPL</symbol>
+    <change>0.7</change>
+    <profit>0.4</profit>
+    <loss>0.4</loss>
     <trend>0.01</trend>
     <lot>10000</lot> 
     <closePosition>false</closePosition>
@@ -15,8 +15,8 @@
     <openShortPositionWithPrice>false</openShortPositionWithPrice>
     <priceForShortPosition>0</priceForShortPosition>
     <!-- 0 = manual  strategy, 1 = mean reversion, 2 = trend   -->
-    <strategy>6</strategy>
-    <impVol>0.20</impVol>
+    <strategy>3</strategy>
+    <impVol>0.15</impVol>
     <tradeable>true</tradeable>
   </stock>
 </config>

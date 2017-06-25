@@ -12,6 +12,7 @@
 package com.TraderLight.DayTrader.AccountMgmt;
 
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -51,8 +52,8 @@ public class AccountMgr {
 	private List<StockPosition> historyPositions;
 	
 	//Option Objects
-	private Map<String,List<OptionPosition>> optionPositions;
-	private Map<Integer, List<OptionPosition> > dayTrades;
+	protected Map<String,List<OptionPosition>> optionPositions;
+	protected Map<Integer, List<OptionPosition> > dayTrades;
 	
 	private double tradeCost = 0;
 	private double optionTradeCost = 0;
@@ -64,7 +65,7 @@ public class AccountMgr {
 	private int positionOpen =  0 ; // number of positions open simultaneously
 	boolean mock;
 	double totalGain;
-	boolean tradeOption = true;
+	boolean tradeOption = false;
 	private String optionSymbolInTheMoney = "";
 	private String optionSymbolOutoftheMoney = "";
 	
@@ -82,7 +83,7 @@ public class AccountMgr {
 	}
 	
 	public void buy_or_sell (String buy_sell, String open_close_update, Level1Quote quote, int lot, Strategy strategy) {
-		
+		this.max_number_of_positions  = 10000;
 		if (this.tradeOption == true) {
 			// call the option related method
 			option_buy_or_sell(buy_sell, open_close_update, quote, lot, strategy);
@@ -136,6 +137,85 @@ public class AccountMgr {
 		return;		
 	}
 	
+	public void sell (String buy_sell, String open_close_update, Level1Quote quote, int lot, Strategy strategy, int leg) {
+		this.max_number_of_positions  = 10000;
+		sellOptionLeg(buy_sell, open_close_update, quote, lot, strategy, leg);
+		
+	}
+	
+	public void sellOptionLeg(String buy_sell, String open_close_update, Level1Quote quote, int lot, Strategy strategy, int leg) {
+		
+		// right now we sell only the last option
+    	Integer quantity;
+    	double  optionPrice;
+
+    	//log.info("Entering sell method for symbol " + symbol);
+    	//log.info("Date is " + quote.getCurrentDateTime());
+    	double Sprice = quote.getLast();
+    	double Xprice=0;
+    	
+    	OptionCostProvider optionQuote = new OptionCostProvider();
+
+    	double sigma = strategy.getImpVol();
+    	
+    	if (!optionPositions.containsKey(quote.getSymbol())) {
+    		log.info( " Something is asking to sell positions that we do not have ");
+    		optionReturnOrder(false, quote.getSymbol(), " ", buy_sell, strategy );
+    		return;
+    	}
+    	
+    	// get list of options to sell
+    	List<OptionPosition> listOfOption;
+    	listOfOption = optionPositions.get(quote.getSymbol());
+    	OptionPosition option = listOfOption.get(listOfOption.size() -1);
+    	
+
+    	Xprice = getExercisePricefromSymbol(option.getSymbol());
+    	quantity = option.getQuantity();
+    	double expirationTime = getExpirationTime(quote, option.getSymbol());
+    	if (getCallOrPutfromSymbol(option.getSymbol()).equals("C")) {
+    		Sprice = quote.getBid();
+    		optionPrice = optionQuote.getCallCost(Sprice, Xprice, expirationTime,sigma);
+    		option.setPriceSold(optionPrice);
+    		log.info("Option symbol " + option.getSymbol());
+    		log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
+    		log.info("delta of the option is " + optionQuote.getCallDelta(Sprice, Xprice, expirationTime, sigma));
+
+    	} else {
+    		Sprice = quote.getAsk();
+    		optionPrice = optionQuote.getPutCost(Sprice, Xprice, expirationTime,sigma);
+    		option.setPriceSold(optionPrice);
+    		log.info("Option symbol " + option.getSymbol());
+    		log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
+    		log.info("delta of the option is " + optionQuote.getPutDelta(Sprice, Xprice, expirationTime, sigma));
+    	}
+    	double totalOptionPrice=optionPrice*option.getQuantity();
+
+    	double singleTradeCost= (optionTradeCost+0.15*(option.getQuantity()/100));
+    	option.updateCost(singleTradeCost);
+    	updateCash(totalOptionPrice, false, singleTradeCost);
+    	List<OptionPosition> listOfOption1 = new ArrayList<OptionPosition>();
+    	listOfOption1.add(option);
+    	// get the list of trades to the dayTrades structure
+    	int i = 0;
+    	while (true) {
+    		i++;
+    		if (!dayTrades.containsKey(i)) {
+    			dayTrades.put(i, listOfOption1);
+    			break;
+    		}
+    	}
+    	
+    	// clear the current position  for this symbol because they have been closed
+    	//optionPositions.remove(quote.getSymbol());
+    	listOfOption.remove(listOfOption.size() -1);
+    	// reduce positions
+    	positionOpen--;
+    	optionReturnOrder(true, quote.getSymbol(), " ", buy_sell , strategy );
+		return;
+		
+	}
+	
 	public void option_buy_or_sell (String buy_sell, String open_close_update, Level1Quote quote, int lot, Strategy strategy) {
 		
 		/*
@@ -177,9 +257,11 @@ public class AccountMgr {
 		}	
 	}
 	
+	
+	
     public void buyOption (Level1Quote quote, int lot, boolean call_put, Strategy strategy, boolean inTheMoney, String buy_sell) {	
 		
-		String optionSymbol="";
+		String optionS="";
 		double optionPrice;
 		double Xprice;
 		double Sprice;
@@ -187,25 +269,29 @@ public class AccountMgr {
 		
 		
 		Sprice = quote.getLast();
-		optionSymbol=optionSymbolWeekly(quote,call_put, inTheMoney);
-		Xprice = getExercisePricefromSymbol(optionSymbol);
-		T1 = getExpirationTime(quote);		
+		optionS=optionSymbolWeekly(quote,call_put, inTheMoney);
+		//optionS=getOption(quote,call_put, inTheMoney);
+		Xprice = getExercisePricefromSymbol(optionS);
+		//T1 = getExpirationTime(quote);
+		T1 = getExpirationTime(quote, optionS);
 		OptionCostProvider ocp = new OptionCostProvider();
 		double sigma = strategy.getImpVol();
 		
 		if (call_put) {
-			Sprice = quote.getAsk();
+			Sprice = quote.getBid();
 			optionPrice = ocp.getCallCost(Sprice,Xprice,T1,sigma);
-			log.info("Option symbol " + optionSymbol);
+			log.info("Option symbol " + optionS);
 			log.info("Buy price is " + optionPrice + " Quantity is " + lot);
+			log.info("Time to epiration is " + T1);
 			log.info("delta of the option is " + ocp.getCallDelta(Sprice, Xprice, T1, sigma));
 			
 		} else {
 			Sprice = quote.getBid();
 			optionPrice = ocp.getPutCost(Sprice,Xprice,T1,sigma);
-			log.info("Option symbol " + optionSymbol);
+			log.info("Option symbol " + optionS);
 			log.info("Buy price is " + optionPrice);
 			log.info("Buy price is " + optionPrice + " Quantity is " + lot);
+			log.info("Time to epiration is " + T1);
 			log.info("delta of the option is " +  ocp.getPutDelta(Sprice, Xprice, T1, sigma));
 			
 		}
@@ -220,7 +306,7 @@ public class AccountMgr {
 		double totalOptionPrice=optionPrice*lot;	    
 	    double singleTradeCost= (optionTradeCost+0.15*(lot/100)); 
 	    updateCash(totalOptionPrice, true, singleTradeCost);
-	    OptionPosition option = new OptionPosition(optionSymbol, optionPrice, lot, singleTradeCost);
+	    OptionPosition option = new OptionPosition(optionS, optionPrice, lot, singleTradeCost);
 		 
 		// add to positions
 	    if (optionPositions.containsKey(quote.getSymbol())) {
@@ -247,7 +333,8 @@ public class AccountMgr {
     	//log.info("Date is " + quote.getCurrentDateTime());
     	double Sprice = quote.getLast();
     	double Xprice=0;
-    	double expirationTime = getExpirationTime(quote);
+    	//double expirationTime = getExpirationTime(quote);
+    	
     	OptionCostProvider optionQuote = new OptionCostProvider();
 
     	double sigma = strategy.getImpVol();
@@ -266,11 +353,13 @@ public class AccountMgr {
 
     	    Xprice = getExercisePricefromSymbol(option.getSymbol());
     	    quantity = option.getQuantity();
+    	    double expirationTime = getExpirationTime(quote, option.getSymbol());
     	    if (getCallOrPutfromSymbol(option.getSymbol()).equals("C")) {
     	    	 Sprice = quote.getBid();
     		     optionPrice = optionQuote.getCallCost(Sprice, Xprice, expirationTime,sigma);
     		     option.setPriceSold(optionPrice);
     		     log.info("Option symbol " + option.getSymbol());
+    		     log.info("Time to epiration is " + expirationTime);
     		     log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
     		     log.info("delta of the option is " + optionQuote.getCallDelta(Sprice, Xprice, expirationTime, sigma));
 
@@ -279,6 +368,7 @@ public class AccountMgr {
     		    optionPrice = optionQuote.getPutCost(Sprice, Xprice, expirationTime,sigma);
     		    option.setPriceSold(optionPrice);
     		    log.info("Option symbol " + option.getSymbol());
+    		    log.info("Time to epiration is " + expirationTime);
     		    log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
     		    log.info("delta of the option is " + optionQuote.getPutDelta(Sprice, Xprice, expirationTime, sigma));
     	    }
@@ -380,20 +470,21 @@ public class AccountMgr {
 	    // and add 5 days to get to Friday of the week
 	    first.add(Calendar.DAY_OF_YEAR, 5);
 	    
-		if ( (date.getDay() == 5) || (date.getDay() == 4) ) {
+		//if ( (date.getDay() == 5) || (date.getDay() == 4) ) {
 			
 			// Thursday and Friday trade next week options.
 			first.add(Calendar.DAY_OF_YEAR, 7);		    			
-		}
+		//}
 		
 		int week = first.get(Calendar.WEEK_OF_MONTH);
-		
+		/*
 		if (week == 3) {
 			
 		    	//log.info("this is the third week of the month " + week);
 		    	// in this case the expiration is Saturday because we are trading  a monthly option and not a weekly option
 		    	first.add(Calendar.DAY_OF_YEAR, 1);		    	
 		}
+		*/
 				
 	    log.info("Option Expiration time that we are using is:  " + first.getTime());
 	    
@@ -543,18 +634,19 @@ public class AccountMgr {
 		int day = date.getDay();
 		//log.info("Date is " + date);
 		//log.info(year + " " + month + " " + day);
-		log.info("day is " + date.getDay());
+		//log.info("day is " + date.getDay());
 		// if trading next week option it should be 12 -day if trading same week 5-day.
-       if ( (date.getDay() == 5) || (date.getDay() == 4) ) {
+     //  if ( (date.getDay() == 5) || (date.getDay() == 4) ) {
 			
 			// Thursday and Friday trade next week options
 			// if trading next week option it should be 12 -day if trading same week 5-day..			
 			 daysToExpiration = 12-day;	    			
-		} else {
-			 daysToExpiration = 5-day;
-		}
+		//} else {
+			// daysToExpiration = 5-day;
+			// daysToExpiration = 12-day;
+		//}
        
-       log.info("days to expiration is  " + daysToExpiration);
+       //log.info("days to expiration is  " + daysToExpiration);
        
 		
 		// fraction of day depends on the hours. Weekly option expire on Friday at the close of market so 
@@ -584,7 +676,7 @@ public class AccountMgr {
 		}
 		
 		double T1 = ((double)daysToExpiration +fractionOfDay)/365.0;
-		log.info( "T1 is " + T1);
+		//log.info( "T1 is " + T1);
 		return T1;
 	}
 	
@@ -694,7 +786,13 @@ public class AccountMgr {
 		String[] symbolSplit = optionSymbol.split(":");
 		return symbolSplit[3];
 		
-	}    
+	} 
+	
+	public String getExpirationFromSymbol(String optionSymbol) {
+		String[] symbolSplit = optionSymbol.split(":");
+		return symbolSplit[1];
+	}
+	
 	
 
 	public void updateCash(double totalPrice, boolean buy_sell) {
@@ -778,7 +876,21 @@ public class AccountMgr {
 		  for (StockPosition stock : positions) {
 			  if (stock.getSymbol().contentEquals(symbol)) {
 				  // update stock position object
-				  stock.updatePosition(lot_int, stockPrice);
+				  if (buy_sell.contentEquals("buy")) {
+				      stock.updatePosition(lot_int, stockPrice);
+				  } else {
+					  
+					  String s = strategy.getClass().getSimpleName();
+					  if (s.contentEquals("MeanReversionStrategyNeq4")) {
+						  stock.updatePosition(lot_int, stockPrice);
+					  } else {
+						  // This is used for delta adjustment when we sell a portion of the stocks
+						  StockPosition deltaStock = new StockPosition(stock.getTypeofPosition(), stock.getSymbol(), lot_int, stock.getPriceBought());
+						  deltaStock.closePosition(stockPrice);
+						  historyPositions.add(deltaStock);
+						  stock.decreaseQuantity(lot_int);
+					  }
+				  }
 				  break;			  
 			  }
 		  }
@@ -869,6 +981,7 @@ public class AccountMgr {
 		log.info("Gain from Trades: " + currentGain + " Loss from Trades: " + currentLoss + " Total Gain/Loss: " + totalGain);
 		log.info("Total Transaction Costs are :" + this.currentTradeCost);	 // totalCost should be the same of currentTadeCost	
 	}	
+	//analyzeOptionTrades();
 	}
 	
 	private void analyzeOptionTrades() {
@@ -886,9 +999,9 @@ public class AccountMgr {
 		double gain;
 			
 		log.info("-------------------------------");
-		log.info("Analyzing Trades.........");
-		log.info("Analyzing Trades.........");
-		log.info("Analyzing Trades.........");
+		log.info("Analyzing Option Trades.........");
+		log.info("Analyzing Option Trades.........");
+		log.info("Analyzing Option Trades.........");
 		log.info("-------------------------------");
 		
 		for (List<OptionPosition> l : dayTrades.values()) {
@@ -956,10 +1069,63 @@ public class AccountMgr {
     	return true;
     }
 	
-	public double getPortfolioValue(String symbol, Strategy strategy) {
+    public double getPortfolioValue(String symbol, Strategy strategy) {
+    	return 0;
+    }
+    
+    
+	public double getPortfolioValue(Level1Quote quote, Strategy strategy) {
+		double Xprice;
+		int quantity;
+		double Sprice;
+		double optionPrice;
+		double totalOptionPrice=0;
+		double pricePaid = 0;
+		double stock_value=0;
 		
-		
-		return (0);
+	   	if (!optionPositions.containsKey(quote.getSymbol())) {
+   		
+    		return 0;
+    	}
+	   
+    	List<OptionPosition> listOfOption;
+    	listOfOption = optionPositions.get(quote.getSymbol());
+    	//double expirationTime = getExpirationTime(quote);
+    	OptionCostProvider optionQuote = new OptionCostProvider();
+
+    	double sigma = strategy.getImpVol();
+    	
+    	for (OptionPosition option : listOfOption) {
+
+    	    Xprice = getExercisePricefromSymbol(option.getSymbol());
+    	    quantity = option.getQuantity();
+    	    double expirationTime = getExpirationTime(quote, option.getSymbol());
+    	    if (getCallOrPutfromSymbol(option.getSymbol()).equals("C")) {
+    	    	 Sprice = quote.getBid();
+    		     optionPrice = optionQuote.getCallCost(Sprice, Xprice, expirationTime, sigma);
+    		     
+
+    	    } else {
+    	    	Sprice = quote.getAsk();
+    		    optionPrice = optionQuote.getPutCost(Sprice, Xprice, expirationTime,sigma);
+    		    
+    		    
+    	    }
+    	    totalOptionPrice += optionPrice*option.getQuantity();  
+    	    pricePaid += option.getPriceBought()*option.getQuantity();
+    	}
+    	/*
+    	for (StockPosition stock : positions) {
+			  if (stock.getSymbol().contentEquals(quote.getSymbol())) {
+				  // assumes that we are long otherwise quantity should be negative for delta calculation
+				  quantity = stock.getQuantity();
+				  stock_value = quantity * quote.getBid() - stock.getPriceBought()*quantity ;
+				  
+			  }
+		}
+    	*/
+		return( totalOptionPrice-pricePaid+stock_value);
+	
 		
 	}
 	
@@ -978,7 +1144,7 @@ public class AccountMgr {
 	public void resetAcctMgr() {
 		this.cash = 0;
 		positions = new ArrayList<StockPosition>();	
-		historyPositions = new ArrayList<StockPosition>();
+	    historyPositions = new ArrayList<StockPosition>();
 		optionPositions = new HashMap<String, List<OptionPosition>>();
 		dayTrades = new HashMap<Integer, List<OptionPosition>>();
 		currentTradeCost=0D;
@@ -1008,7 +1174,7 @@ public class AccountMgr {
 		    	//log.info("Date is " + quote.getCurrentDateTime());
 		    	double Sprice = quote.getLast();
 		    	double Xprice=0;
-		    	double expirationTime = getExpirationTime(quote);
+		    	//double expirationTime = getExpirationTime(quote);
 		    	OptionCostProvider optionQuote = new OptionCostProvider();
 
 		    	double sigma = strategy.getImpVol();
@@ -1026,10 +1192,13 @@ public class AccountMgr {
 		    	OptionPosition option = listOfOption.get(listOfOption.size() -1);
 		    	Xprice = getExercisePricefromSymbol(option.getSymbol());
 	    	    quantity = option.getQuantity();
+	    	     double expirationTime = getExpirationTime(quote, option.getSymbol());
 	    	    if (getCallOrPutfromSymbol(option.getSymbol()).equals("C")) {
 	    	    	 Sprice = quote.getBid();
+	    	    	
 	    		     optionPrice = optionQuote.getCallCost(Sprice, Xprice, expirationTime,sigma);
 	    		     option.setPriceSold(optionPrice);
+	    		     
 	    		     log.info("Option symbol " + option.getSymbol());
 	    		     log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
 	    		     log.info("delta of the option is " + optionQuote.getCallDelta(Sprice, Xprice, expirationTime, sigma));
@@ -1067,6 +1236,99 @@ public class AccountMgr {
 		    	
 		    }
 
+	 public void sellDeltaAdjustment (Level1Quote quote, String symbol, Strategy strategy, String buy_sell, int quantity, String call_or_put) {	
+			// we have to sell quantity associated with symbol
+
+		    	double  optionPrice;
+
+		    	log.info("Entering sellDeltaAdjustment method for symbol " + symbol);
+		    	log.info("Date is " + quote.getCurrentDateTime());
+		    	double delta = calculatePortfolioDelta(quote,strategy);
+		    	log.info("Portfolio Delta is " + delta);
+		    	double Sprice = quote.getLast();
+		    	double Xprice=0;
+		    	//double expirationTime = getExpirationTime(quote);
+		    	OptionCostProvider optionQuote = new OptionCostProvider();
+
+		    	double sigma = strategy.getImpVol();
+		    	
+		    	if (!optionPositions.containsKey(quote.getSymbol())) {
+		    		log.info( " Something is asking to sell positions that we do not have ");
+		    		optionReturnOrder(false, quote.getSymbol(), " ", buy_sell, strategy );
+		    		return;
+		    	}
+		    	
+		    	// get the option 
+		    	OptionPosition option= null;
+		    	for (OptionPosition o : optionPositions.get(quote.getSymbol())) {
+		    		
+		    		Xprice = getExercisePricefromSymbol(o.getSymbol());
+		    		
+		    		if (getCallOrPutfromSymbol(o.getSymbol()).equals(call_or_put))  {
+		    			option = o;
+		    			//break;
+		    		}
+		    	}	
+		    	
+		    	if (option == null) {
+		    		log.info("No option found in Account Mgr");
+		    		optionReturnOrder(false, quote.getSymbol(), " ", buy_sell, strategy );
+		    		return;
+		    	}
+		    	
+		    	Xprice = getExercisePricefromSymbol(option.getSymbol());
+		    	double expirationTime = getExpirationTime(quote, option.getSymbol());
+	    	    if (getCallOrPutfromSymbol(option.getSymbol()).equals("C")) {
+	    	    	 Sprice = quote.getBid();
+	    		     optionPrice = optionQuote.getCallCost(Sprice, Xprice, expirationTime,sigma);
+	    		     //option.setPriceSold(optionPrice);
+	    		     log.info("Option symbol " + option.getSymbol());
+	    		     log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
+	    		     log.info("Time to epiration is " + expirationTime);
+	    		     log.info("delta of the option is " + optionQuote.getCallDelta(Sprice, Xprice, expirationTime, sigma));
+
+	    	    } else {
+	    	    	Sprice = quote.getAsk();
+	    		    optionPrice = optionQuote.getPutCost(Sprice, Xprice, expirationTime,sigma);
+	    		    //option.setPriceSold(optionPrice);
+	    		    log.info("Option symbol " + option.getSymbol());
+	    		    log.info("Sell price is " + optionPrice + " Quntity is " + quantity);
+	    		    log.info("Time to epiration is " + expirationTime);
+	    		    log.info("delta of the option is " + optionQuote.getPutDelta(Sprice, Xprice, expirationTime, sigma));
+	    	    }
+	    	    double totalOptionPrice=optionPrice*quantity;
+	    	    
+	    	    double singleTradeCost= (optionTradeCost+0.15*(quantity/100));
+	    	   // option.updateCost(singleTradeCost);
+	    	    option.updateQuantity(-quantity);
+	    	    updateCash(totalOptionPrice, false, singleTradeCost);
+	    	    	    	    
+	    	    List<OptionPosition> listOfOption1 = new ArrayList<OptionPosition>();
+	    	    // create an option trade
+	    	    OptionPosition newOption = new OptionPosition(option.getSymbol(), option.getPriceBought(), quantity, singleTradeCost );
+	    	    newOption.setPriceSold(optionPrice);
+	    	    listOfOption1.add(newOption);
+		    	// get the list of trades to the dayTrades structure
+		    	int i = 0;
+		    	while (true) {
+		    		i++;
+		    		if (!dayTrades.containsKey(i)) {
+		    			dayTrades.put(i, listOfOption1);
+		    			break;
+		    		}
+		    	}
+		    	if (option.getQuantity() == 0) {
+	    	    	// remove from positions
+		    		log.info("Removing option from positions " + option.getSymbol());
+	    	    	optionPositions.get(quote.getSymbol()).remove(option);
+	    	    }
+		    	
+		    	optionReturnOrderOneLeg(true, quote.getSymbol(), " ", buy_sell , strategy );
+				return;
+		    	
+		    }
+	 
+	 
 	 public void optionReturnOrderOneLeg(Boolean success, String symbol, String price, String buy_sell, Strategy strategy) {
 	    	
 	    	if (!success) {	  
@@ -1074,8 +1336,324 @@ public class AccountMgr {
 	  		  strategy.strategyCallback(false, symbol, buy_sell, "0");	  
 	  		  return;
 	  	    }
-	    	strategy.strategyCallbackOneLeg(true, symbol, buy_sell, price);
+	    	strategy.strategyCallback(true, symbol, buy_sell, price);
 	    	
 	    	
 	    }
+	 
+		public double calculatePortfolioDelta(Level1Quote quote, Strategy strategy) {
+			
+			String optionSymbol="";
+			double Xprice;
+			double Sprice;
+			double T1;
+			
+			double delta = 0.0;
+			double sigma = strategy.getImpVol();
+			if (optionPositions.containsKey(quote.getSymbol())) {
+				
+		    	for (OptionPosition option : optionPositions.get(quote.getSymbol())) {
+		    		Sprice = quote.getBid();
+		    		optionSymbol=option.getSymbol();
+		    		Xprice = getExercisePricefromSymbol(optionSymbol);
+		    		//T1 = getExpirationTime(quote);	
+		    		T1 = getExpirationTime(quote, option.getSymbol());
+		    		OptionCostProvider ocp = new OptionCostProvider();
+		    		if (getCallOrPutfromSymbol(option.getSymbol()).equals("C"))  {
+		    			delta += ocp.getCallDelta(Sprice, Xprice, T1, sigma)*option.getQuantity();
+		    		} else {
+		    			delta += ocp.getPutDelta(Sprice, Xprice, T1, sigma)*option.getQuantity();
+		    		}
+		    		
+		    	}	    	
+			}
+			int quantity = 0;
+			for (StockPosition stock : positions) {
+				  if (stock.getSymbol().contentEquals(quote.getSymbol())) {
+					  // assumes that we are long otherwise quantity should be negative for delta calculation
+					  quantity = stock.getQuantity();
+				  }
+			}
+			return delta+quantity;
+		}
+		
+		
+		
+        public int getQuantity(Level1Quote quote, String optionType) {
+			
+			int quantity =0;
+						
+			if (optionPositions.containsKey(quote.getSymbol())) {
+				
+		    	for (OptionPosition option : optionPositions.get(quote.getSymbol())) {
+		    		
+		    		if (getCallOrPutfromSymbol(option.getSymbol()).equals(optionType))  {
+		    			quantity = option.getQuantity();
+		    		}
+		    		
+		    	}	    	
+			}
+						
+			return quantity;
+		}
+        
+        
+        public void buyDeltaAdjustment (Level1Quote quote, String symbol, Strategy strategy, String buy_sell, int quantity, String call_or_put) {
+        	
+	    	double  optionPrice;
+
+	    	log.info("Entering buyDeltaAdjustment method for symbol " + symbol);
+	    	log.info("Date is " + quote.getCurrentDateTime());
+	    	log.info("Portfolio Delta is " + calculatePortfolioDelta(quote,strategy));
+	    	double Sprice = quote.getLast();
+	    	double Xprice=0;
+	    	double expirationTime;
+	    	OptionCostProvider optionQuote = new OptionCostProvider();
+
+	    	double sigma = strategy.getImpVol();
+	    	
+	    	if (!optionPositions.containsKey(quote.getSymbol())) {
+	    		log.info( " Something is asking to sell positions that we do not have ");
+	    		optionReturnOrder(false, quote.getSymbol(), " ", buy_sell, strategy );
+	    		return;
+	    	}
+	    	
+	    	// get the option 
+	    	OptionPosition option= null;
+	    	for (OptionPosition o : optionPositions.get(quote.getSymbol())) {
+	    		
+	    		Xprice = getExercisePricefromSymbol(o.getSymbol());
+	    		 
+	    		if (getCallOrPutfromSymbol(o.getSymbol()).equals(call_or_put))  {
+	    			option = o;
+	    			break;
+	    		}
+	    	}	
+	    	
+	    	if (option == null) {
+	    		log.info("No option found in Account Mgr");
+	    		optionReturnOrder(false, quote.getSymbol(), " ", buy_sell, strategy );
+	    		return;
+	    	}
+	    	
+	    	Xprice = getExercisePricefromSymbol(option.getSymbol());
+	    	expirationTime = getExpirationTime(quote, option.getSymbol());
+    	    if (getCallOrPutfromSymbol(option.getSymbol()).equals("C")) {
+    	    	 Sprice = quote.getBid();
+    		     optionPrice = optionQuote.getCallCost(Sprice, Xprice, expirationTime,sigma);
+    		     //option.setPriceSold(optionPrice);
+    		     log.info("Option symbol " + option.getSymbol());
+    		     log.info("Buy price is " + optionPrice + " Quantity is " + quantity);
+    		     log.info("delta of the option is " + optionQuote.getCallDelta(Sprice, Xprice, expirationTime, sigma));
+
+    	    } else {
+    	    	Sprice = quote.getAsk();
+    		    optionPrice = optionQuote.getPutCost(Sprice, Xprice, expirationTime,sigma);
+    		    //option.setPriceSold(optionPrice);
+    		    log.info("Option symbol " + option.getSymbol());
+    		    log.info("Sell price is " + optionPrice + " Quantity is " + quantity);
+    		    log.info("delta of the option is " + optionQuote.getPutDelta(Sprice, Xprice, expirationTime, sigma));
+    	    }
+    	    double totalOptionPrice=optionPrice*quantity;
+    	    
+    	    double singleTradeCost= (optionTradeCost+0.15*(quantity/100));
+    	   // option.updateCost(singleTradeCost);
+    	    // update price bought
+    	    option.priceBought = (option.priceBought*option.getQuantity() + optionPrice*quantity)/(option.getQuantity() + quantity);   	   
+    	    option.updateQuantity(quantity);
+    	    updateCash(totalOptionPrice, true, singleTradeCost);
+    	    optionReturnOrderOneLeg(true, quote.getSymbol(), " ", buy_sell , strategy );
+        	
+        }
+        
+        public void buyPutOption (Level1Quote quote, int lot, boolean call_put, Strategy strategy, boolean inTheMoney, String buy_sell) {	
+    		
+    		String optionSymbol="";
+    		double optionPrice;
+    		double Xprice;
+    		double Sprice;
+    		double T1;
+    		  		
+    		Sprice = quote.getLast();
+    		optionSymbol=getOption(quote,call_put, inTheMoney);
+    		Xprice = getExercisePricefromSymbol(optionSymbol);
+    		T1 = getExpirationTime(quote);	
+    		T1 = getExpirationTime(quote, optionSymbol);
+    		OptionCostProvider ocp = new OptionCostProvider();
+    		double sigma = strategy.getImpVol();
+    		
+    		if (call_put) {
+    			Sprice = quote.getAsk();
+    			optionPrice = ocp.getCallCost(Sprice,Xprice,T1,sigma);
+    			log.info("Option symbol " + optionSymbol);
+    			log.info("Buy price is " + optionPrice + " Quantity is " + lot);
+    			log.info("delta of the option is " + ocp.getCallDelta(Sprice, Xprice, T1, sigma));
+    			
+    		} else {
+    			Sprice = quote.getBid();
+    			optionPrice = ocp.getPutCost(Sprice,Xprice,T1,sigma);
+    			log.info("Option symbol " + optionSymbol);
+    			log.info("Buy price is " + optionPrice);
+    			log.info("Buy price is " + optionPrice + " Quantity is " + lot);
+    			log.info("delta of the option is " +  ocp.getPutDelta(Sprice, Xprice, T1, sigma));
+    			
+    		}
+    		// When buying simulate bid-ask spread .....
+    		
+    		if (optionPrice<3.0) {
+    			optionPrice=optionPrice+0.01;
+    		} else {
+    			optionPrice=optionPrice+0.1;
+    		}
+    		
+    		double totalOptionPrice=optionPrice*lot;	    
+    	    double singleTradeCost= (optionTradeCost+0.15*(lot/100)); 
+    	    updateCash(totalOptionPrice, true, singleTradeCost);
+    	    OptionPosition option = new OptionPosition(optionSymbol, optionPrice, lot, singleTradeCost);
+    		 
+    		// add to positions
+    	    if (optionPositions.containsKey(quote.getSymbol())) {
+    	    	// symbol already exists in the map
+    	    	optionPositions.get(quote.getSymbol()).add(option);
+    	    } else {
+    	    	List<OptionPosition> listOption = new ArrayList<OptionPosition>();
+    	    	listOption.add(option);
+    	    	optionPositions.put(quote.getSymbol(), listOption);
+    	    }
+        
+    		optionReturnOrder(true, quote.getSymbol(), " ", buy_sell , strategy );
+    		return;
+    	 }
+        
+    	
+    	public String getOption(Level1Quote quote, boolean buy, boolean inTheMoney) {
+    		
+    		
+    		String expiration;
+    		String callOrPut = "";
+    		String optionSymbol=""; // in the money option symbol
+    		double price;
+    		String symbol;
+    		   		
+    		price = quote.getLast();
+    		
+    		if (buy) {
+    			callOrPut = "C";
+    			//price = quote.getLast()+(0.02*quote.getLast());
+    			//price = quote.getLast();
+    			price = quote.getBid() + 3;
+    		} else {
+    			callOrPut = "P";
+    			//price = quote.getLast()-(0.02*quote.getLast());
+    			price = quote.getBid() - 3;
+    			//price = quote.getLast();
+    			
+    		}
+    		
+    		int intPrice = (int) Math.round(price);
+    		symbol = quote.getSymbol();
+    		
+    		Date date = quote.getCurrentDateTime();
+    		Calendar rightNow = Calendar.getInstance();
+    		rightNow.setTime(date);
+    		   		
+    		Calendar first = (Calendar) rightNow.clone();
+    	    first.add(Calendar.DAY_OF_WEEK, first.getFirstDayOfWeek() - first.get(Calendar.DAY_OF_WEEK));
+    	    
+    	    // and add 5 days to get to Friday of the week
+    	    first.add(Calendar.DAY_OF_YEAR, 5);
+    	    // Add one month
+    	    first.add(Calendar.MONTH, 1);
+    				
+    	    log.info("Option Expiration time that we are using is:  " + first.getTime());
+    	    
+    	    SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+    	    expiration = df.format(first.getTime());
+    	    
+    	    optionSymbol=symbol+":"+expiration+":"+intPrice+":"+callOrPut;
+    	    
+    	    return optionSymbol;
+    	     		
+    	}
+    	
+
+    	public double getExpirationTime(Level1Quote quote, String optionSymbol) {
+    		
+    		Date currentDate=quote.getCurrentDateTime();
+    		Date expirationDate = null;
+    		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");    		
+    		try {
+				 expirationDate = sdf.parse(getExpirationFromSymbol(optionSymbol));
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		
+            Calendar now = Calendar.getInstance();
+    		now.setTime(currentDate);
+    		Calendar expiration = Calendar.getInstance();
+    		expiration.setTime(expirationDate);
+            return (daysBetween(expiration, now)/365.0);
+    	}
+    	
+    	public  int daysBetween(Calendar day1, Calendar day2){
+    	    Calendar dayOne = (Calendar) day1.clone(),
+    	            dayTwo = (Calendar) day2.clone();
+
+    	    if (dayOne.get(Calendar.YEAR) == dayTwo.get(Calendar.YEAR)) {
+    	        return Math.abs(dayOne.get(Calendar.DAY_OF_YEAR) - dayTwo.get(Calendar.DAY_OF_YEAR));
+    	    } else {
+    	        if (dayTwo.get(Calendar.YEAR) > dayOne.get(Calendar.YEAR)) {
+    	            //swap them
+    	            Calendar temp = dayOne;
+    	            dayOne = dayTwo;
+    	            dayTwo = temp;
+    	        }
+    	        int extraDays = 0;
+
+    	        int dayOneOriginalYearDays = dayOne.get(Calendar.DAY_OF_YEAR);
+
+    	        while (dayOne.get(Calendar.YEAR) > dayTwo.get(Calendar.YEAR)) {
+    	            dayOne.add(Calendar.YEAR, -1);
+    	            // getActualMaximum() important for leap years
+    	            extraDays += dayOne.getActualMaximum(Calendar.DAY_OF_YEAR);
+    	        }
+
+    	        return extraDays - dayTwo.get(Calendar.DAY_OF_YEAR) + dayOneOriginalYearDays ;
+    	    }
+    	}
+    	
+    	public void buy_or_sell_delta (String buy_sell, String open_close_update, Level1Quote quote, int lot, Strategy strategy) {
+    		
+    		log.info("Entering buy_or_sell_delta method" + " buy_sell is " + buy_sell + " positionOpen is " + positionOpen);
+    		log.info("Date is " + quote.getCurrentDateTime());
+	    	log.info("Portfolio Delta is " + calculatePortfolioDelta(quote,strategy));
+    		double price;
+    		
+    		if (buy_sell.contentEquals("buy")) {
+    			price = quote.getAsk();
+    		} else {
+    			price = quote.getBid();
+    		}
+    		
+    		String price_string = String.valueOf(price);
+    		
+    		if (mock) {
+    			// we are simulating do not send orders to the brokers
+    			returnOrderParameters(true, quote.getSymbol() , price_string, Integer.toString(lot), buy_sell, strategy, open_close_update);
+    			return;
+    		}
+    					
+    	    if (broker.contentEquals("TM")) {
+    			// TODO when closing an order we should get the filled quantity form the open position in the account manager list instead 
+    	    	// of relying on the lot coming from the strategy. If we operate at market the two things should coincide otherwise they may not.
+    			GenericOrderExecutorTM order = new GenericOrderExecutorTM(buy_sell, open_close_update, quote.getSymbol(), price_string, lot, this, strategy);			
+    			Thread thread = new Thread(order);
+    			thread.start();	
+    			
+    		} else {
+    			log.info("Broker not supported in Account Mgr");
+    		}
+    		return;		
+    	}
 }
