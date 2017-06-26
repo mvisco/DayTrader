@@ -48,26 +48,23 @@ public class GetQuoteAmeritrade {
 					return bidS;
 				}
 		  }
-		  
-		  
-		  
-		  
+
 		  double bid = Double.parseDouble(bidS);
 		  double ask = Double.parseDouble(askS);
 		  double diff = Math.round( (ask-bid) * 100.0 ) / 100.0;
 		  
 		  if (buy) {
-				// if buying try to get the best price return the bid+0.02 or if option price is greater than 3 return bid+0.1 to throw a bone 
+				// if buying try to get the best price return the bid+0.01 or if option price is greater than 3 return bid+0.1 to throw a bone 
 				// to the market makers, in all other cases return the bid
 				// We will sit on it for 5 minutes in the order executor to see if gets filled....
 				if (bid >= 3.0) {
 					//double number1 = Math.round((bid+0.1) * 100.0) / 100.0;
 					return String.valueOf(bid+0.1);
 				} else {
-					double number2 = Math.round((bid+0.02) * 100.0) / 100.0;
+					double number2 = Math.round((bid+0.01) * 100.0) / 100.0;
 					return String.valueOf(number2);
 				}
-			}
+		   }
 			
 			// The rest of this code should really apply only to the sell case where we try to get in the middle
 		  
@@ -113,9 +110,7 @@ public class GetQuoteAmeritrade {
 	   	  }
 		  
 		  
-		  //log.info("bid, ask and iv " + bid+ " " + ask + " " + iv);	
-		  
-		  // The rest of the cases we try to get in the middle except for when  buying and the spread is too high, see below
+		  //log.info("bid, ask and iv " + bid+ " " + ask + " " + iv);
 		  quote = (Double.parseDouble(bidS) + Double.parseDouble(askS))/2;
 		  int quote_int=(int) quote;
 		  
@@ -129,9 +124,6 @@ public class GetQuoteAmeritrade {
 			//Otherwise increments of 1 cent are acceptable
 			quote=Math.round(quote * 100.0) / 100.0;		
 			return(String.valueOf(quote));
-			  
-		  
-		  
 		}
 	
 	public String getBid() {

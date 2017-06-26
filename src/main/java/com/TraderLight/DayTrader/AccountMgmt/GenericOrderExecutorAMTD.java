@@ -62,7 +62,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 	Strategy strategy;
 	int i=0;
 	int leg;
-	boolean closeTransaction; // if true we sell at the bid and buy at the ask otherwise we will try to close transaction at better price
+	boolean closeTransaction=false; // if true we sell at the bid and buy at the ask otherwise we will try to close transaction at better price
 	boolean spread_trading=false;
 	String shortOptionSymbol="";
 	String longOptionSymbol= "";
@@ -98,7 +98,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 	}
 	
 	public GenericOrderExecutorAMTD(String buy_sell, String open_close_update, String optionSymbol, String symbol, String price, int lot, AccountMgr account, 
-			Strategy strategy, boolean mock, boolean trade_option) {
+			Strategy strategy, boolean mock, boolean closeTransaction, boolean trade_option) {
 		//  constructor for options
 		this.stock_trading=false;
 		this.buy_sell = buy_sell;
@@ -107,11 +107,12 @@ public class GenericOrderExecutorAMTD implements Runnable {
 		this.symbol = symbol;
 		this.stockPrice = price;
 		this.quantity= Integer.toString(lot); // We will use this parameter to return the number of options (for ex. 100, 200 etc) as a string in callbacks
-		this.lot=Integer.toString(lot);
+		this.lot=Integer.toString(lot/100);
 		this.account = account;
 		this.strategy=strategy;	
 		this.mock = mock;
 		this.trade_option = true;
+		this.closeTransaction = closeTransaction;
 	}
 
 	@Override
@@ -119,6 +120,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 				
 		log.info("Entering Order Executor TM");
 		log.info("Thread ID is: " + Thread.currentThread().getId());
+		log.info("Stock price is " + stockPrice);
 		
 		if (!trade_option) {
 		   stockTrade();
@@ -358,7 +360,13 @@ public class GenericOrderExecutorAMTD implements Runnable {
 		// third we need to place the order
 		log.info("Thread ID is: " + Thread.currentThread().getId());
 		String[] symbolSplit = optionSymbol.split(":");
-
+		
+		if (this.buy_sell.contentEquals("buy") ){
+			buy=true;
+		} else {
+			buy=false;
+		}
+		
 		// Date used by Account Mgr is in the form of 20130419 while AMTD needs 041913		
 		DateFormat df = new SimpleDateFormat("yyyyMMdd"); 
 		Date oldDate=new Date();
@@ -406,7 +414,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 		log.info("Option Price is " + optionPrice);	
 		if (mock) {
 			// do not place order just simulate success			
-			account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+			account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, quantity, open_close_update, strategy, iv, stockPrice);
 			return;
 		}
 	
@@ -460,7 +468,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 		
 		if (status.contentEquals("Filled")) {
 			//order has been filled. return Success 
-			account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+			account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, quantity, open_close_update, strategy, iv, stockPrice);
 			return;
 			
 		} 
@@ -492,7 +500,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 		
 		    if (status.contentEquals("Filled" )) {
 			   //order has been filled. return Success 
-		    	account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+		    	account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, quantity, open_close_update, strategy, iv, stockPrice);
 			   return;
 			
 		    }
@@ -543,7 +551,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 		    				   // race condition we tried to cancel but the order has been filled
 		    				    if (status.contentEquals("Filled" )) {
 		    					   //order has been filled. return Success 
-		    				    	account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+		    				    	account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, quantity, open_close_update, strategy, iv, stockPrice);
 		    					   return;
 		    					
 		    				    }
@@ -640,7 +648,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 			   // There may be a race condition for which the order has been filled anyway even if we tried to cancel if so return success
 			   // otherwise the method  will return failure on its own 
 			   if (status.contentEquals("Filled" )) {				
-				   account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+				   account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, quantity, open_close_update, strategy, iv, stockPrice);
 				  return;				
 			   }
 			   
@@ -691,7 +699,7 @@ public class GenericOrderExecutorAMTD implements Runnable {
 					   // There may be a race condition for which the order has been filled anyway even if we tried to cancel if so return success
 					   // otherwise the method  will return failure on its own 
 					   if (status.contentEquals("Filled" )) {				
-						   account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, lot, open_close_update, strategy, iv, stockPrice);
+						   account.optionReturnOrder(true, optionSymbol, symbol, optionPrice, buy_sell, quantity, open_close_update, strategy, iv, stockPrice);
 						  return;				
 					   }
 				}	

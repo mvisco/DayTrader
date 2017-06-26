@@ -362,7 +362,7 @@ public class AccountMgr {
 			
 			// set up trade costs
 			this.tradeCost = 9.99;
-			this.optionTradeCost = 3.5;
+			this.optionTradeCost = 7.0;
 			this.pricePerContract = 0.75;
 								
 		} else if ( (broker.contentEquals("OH")) || (broker.contentEquals("TM"))) {
@@ -402,7 +402,7 @@ public class AccountMgr {
 	}
 	
 	public void option_buy_or_sell (String buy_sell, String open_close_update, Level1Quote quote, int lot, String call_or_put, 
-			Strategy strategy) {
+			Strategy strategy, boolean closeTransaction) {
 		
 		log.info("Entering option_buy_or_sell method" + " buy_sell is " + buy_sell + " positionOpen is " + positionOpen);
 		
@@ -418,7 +418,7 @@ public class AccountMgr {
 		
 		if (open_close_update.contentEquals("open")) {
 			
-			log.info("Increasing position open" + (positionOpen+1));
+			log.info("Increasing position open " + (positionOpen+1));
 			positionOpen++;
 		}
 		
@@ -430,26 +430,31 @@ public class AccountMgr {
 		} 
 				
 		if (buy_sell.contentEquals("buy")) {			
-			buyOption(quote, lot, call_put, strategy, buy_sell,  open_close_update);
+			buyOption(quote, lot, call_put, strategy, buy_sell,  open_close_update, closeTransaction);
 			
 		} else {			
-			sellOption(quote, lot, call_put, strategy,buy_sell,  open_close_update );
+			sellOption(quote, lot, call_put, strategy,buy_sell,  open_close_update, closeTransaction );
 		}	
 
 	}
 	
-    public void buyOption (Level1Quote quote, int lot, boolean call_put, Strategy strategy, String buy_sell, String open_close_update) {	
+    public void buyOption (Level1Quote quote, int lot, boolean call_put, Strategy strategy, String buy_sell, String open_close_update, boolean closeTransaction) {	
 		
 		String optionS="";
 		String priceS;		
 		double percent_variation = 0.01; // how much out of the money is the strike of th options we buy given current price
 		int expiration_from_now = 0; // weeks from current week
 				
-		priceS = String.valueOf(quote.getLast());
+		
+		if (call_put) {
+			priceS = String.valueOf(quote.getAsk());
+		} else {
+		   priceS = String.valueOf(quote.getBid());
+		}
 		optionS=getOption(quote,call_put, percent_variation, expiration_from_now);
 		if (broker.contentEquals("AMTD")) {
 			GenericOrderExecutorAMTD order = new GenericOrderExecutorAMTD(buy_sell, open_close_update, optionS, 
-					quote.getSymbol(), priceS, lot, this, strategy, mock, true);				
+					quote.getSymbol(), priceS, lot, this, strategy, mock, closeTransaction, true);				
 			Thread thread = new Thread(order);
 			thread.start();
 			
@@ -506,7 +511,7 @@ public class AccountMgr {
 		 String priceS = String.valueOf(quote.getLast());
 		 if (broker.contentEquals("AMTD")) {
 			 GenericOrderExecutorAMTD order = new GenericOrderExecutorAMTD(buy_sell, open_close_update, option.getSymbol(), 
-					 quote.getSymbol(), priceS, lot, this, strategy, mock, true);				
+					 quote.getSymbol(), priceS, lot, this, strategy, mock, true, true);				
 			 Thread thread = new Thread(order);
 			 thread.start();
 
@@ -524,7 +529,7 @@ public class AccountMgr {
 	}
 
 
-    public void sellOption (Level1Quote quote, int lot, boolean call_put, Strategy strategy, String buy_sell, String open_close_update) {	
+    public void sellOption (Level1Quote quote, int lot, boolean call_put, Strategy strategy, String buy_sell, String open_close_update, boolean closeTransaction) {	
 	// we have to sell all options associated with symbol
 
     	Integer quantity;
@@ -557,7 +562,7 @@ public class AccountMgr {
     	    String priceS = String.valueOf(quote.getLast());
     		if (broker.contentEquals("AMTD")) {
     			GenericOrderExecutorAMTD order = new GenericOrderExecutorAMTD(buy_sell, open_close_update, option.getSymbol(), 
-    					quote.getSymbol(), priceS, lot, this, strategy, mock, true);				
+    					quote.getSymbol(), priceS, lot, this, strategy, mock, closeTransaction, true);				
     			Thread thread = new Thread(order);
     			thread.start();
     			
@@ -796,29 +801,32 @@ public class AccountMgr {
 		int price_int = (int)(price*10);
 		//double infPrice = (price_int/10.0) - stock.getStrike_increment();
 		//double supPrice = (price_int/10.0) + stock.getStrike_increment();
-		double infPrice = (price_int/10.0) ;
-		double supPrice = (price_int/10.0) ;
-		log.info("infPrice is " + infPrice);		
-		log.info("supPrice is " + supPrice );
+		//double infPrice = (price_int/10.0) ;
+		//double supPrice = (price_int/10.0) ;
+		double reference_price = (price_int/10.0) ;
+		log.info("reference_price is " + reference_price);
+		//log.info("infPrice is " + infPrice);		
+		//log.info("supPrice is " + supPrice );
 		
 		
-		// get the strike for the option. The idea is that for calls we get the the lowest strike that is >= supPrice
-		// while for put we get the highest strike that is >= infPrice
+		// get the strike for the option. We want to get the first in the money. 
+		// The idea is that for puts we get the the lowest strike that is >= reference_price
+		// while for calls we get the  highest strike that is <= reference_price
 		BigDecimal strike= new BigDecimal("0");
 		
-		if (buy) {
-			callOrPut = "C";
+		if (!buy) {
+			callOrPut = "P";
 			for (BigDecimal bd : stock.getStrikes()) {
-				if (bd.doubleValue() >= supPrice) {
+				if (bd.doubleValue() >= reference_price) {
 					strike = bd;
 					break;
 				}
 			}
 		} else {
-			callOrPut = "P";
+			callOrPut = "C";
 			for (int i = (stock.getStrikes().size() -1); i >=0; i--) {
 				BigDecimal bd = stock.getStrikes().get(i);
-				if (bd.doubleValue() <= infPrice) {
+				if (bd.doubleValue() <= reference_price) {
 					strike = bd;
 					break;
 				}
@@ -856,13 +864,12 @@ public class AccountMgr {
 	    }
 	    	
 	    // TODO TEMP CODE START OVERWRITE EXPIRATION
-	    expiration = "20170519";
+	    expiration = "20170707";
 	    // TEMP CODE END
 	    optionSymbol=symbol+":"+expiration+":"+new_strike.toPlainString()+":"+callOrPut;	    
 	    return optionSymbol;
 	    
 	}
-	
 	
 
 	public double getExpirationTime(Level1Quote quote, String optionSymbol) {

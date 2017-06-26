@@ -194,7 +194,7 @@ public class GammaScalping extends Strategy{
 					this.desiredState=States.SInit1;
 					this.StrategyState=States.STemp;
 					this.possiblePrice=currentPrice;				
-					account.option_buy_or_sell(BUY, OPEN, quote, lot, "P", this);
+					account.option_buy_or_sell(BUY, OPEN, quote, lot, "P", this, true);
 					
 					
 				
@@ -211,7 +211,7 @@ public class GammaScalping extends Strategy{
 			this.currentState = States.SInit1;
 			this.desiredState=States.S0;
 			this.StrategyState=States.STemp;		
-			account.option_buy_or_sell(BUY, OPEN, quote, lot, "C", this);
+			account.option_buy_or_sell(BUY, OPEN, quote, lot, "C", this, true);
 			break;
 		
 		case S0:

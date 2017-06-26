@@ -42,6 +42,9 @@ public class TestBigDecimal {
 			System.out.println(bc);
 			System.out.println(new_strike);
 			System.out.println(new_strike.toPlainString());
+			if (new_strike.toPlainString().contentEquals("850")) {
+				System.out.println("This is it " + bc);
+			}
 		}
 		
 		

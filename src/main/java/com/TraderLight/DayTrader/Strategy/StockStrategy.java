@@ -25,7 +25,7 @@ import com.TraderLight.DayTrader.MarketDataProvider.Level1Quote;
 import com.TraderLight.DayTrader.StockTrader.Logging;
 import com.TraderLight.DayTrader.StockTrader.Stock;
 
-public class MeanReversionNEq2 extends Strategy{
+public class StockStrategy extends Strategy{
 	
 		
 	enum States {S0, S1, S2, S3, S4, STemp, SDelta };
@@ -56,7 +56,7 @@ public class MeanReversionNEq2 extends Strategy{
 	private final String SELL = "sell";
 	
 	
-	public MeanReversionNEq2(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
+	public StockStrategy(String symbol, int symbol_lot, double change, boolean isTradeable, AccountMgr account, double loss, 
 			double profit, double impVol, List<Integer> v, Stock stock) {
 		
 		super(symbol, symbol_lot, change, isTradeable, account, loss, profit, impVol, v);
@@ -184,7 +184,7 @@ public class MeanReversionNEq2 extends Strategy{
 				this.desiredState=States.S1;
 				this.StrategyState=States.STemp;
 				this.possiblePrice=currentBid;				
-				account.option_buy_or_sell(BUY, OPEN, quote, lot, "P", this, false);
+				account.buy_or_sell(SELL, OPEN, quote, lot, this);
 				
 			// We open a position if the value goes below  the mean by objective_change in automatic fashion 
 			// or if there is a manual  intervention that tells us to open a long position
@@ -197,7 +197,7 @@ public class MeanReversionNEq2 extends Strategy{
 				this.desiredState=States.S2;
 				this.StrategyState = States.STemp;
 				this.possiblePrice=currentAsk;					
-				account.option_buy_or_sell(BUY, OPEN, quote, lot, "C", this, false);
+				account.buy_or_sell(BUY, OPEN, quote, lot, this);
 				
 		    } else {
 		    	// nothing to do
@@ -217,7 +217,7 @@ public class MeanReversionNEq2 extends Strategy{
 				this.desiredState=States.S0;
 				this.StrategyState = States.STemp;
 				this.possiblePrice = 0;				
-				account.option_buy_or_sell(SELL, CLOSE, quote, lot, "P", this, true);
+				account.buy_or_sell(BUY, CLOSE, quote, lot, this);
 				// We clear the mean at the end of every cycle
 				clearMean();
 				this.isTradeable = false;
@@ -234,7 +234,7 @@ public class MeanReversionNEq2 extends Strategy{
 		    	this.desiredState=States.S3;
 		    	this.StrategyState = States.STemp;	
 		    	this.possiblePrice=(this.price + currentBid)/(2.0);   
-		    	account.option_buy_or_sell(BUY, OPEN, quote, lot, "P", this, false);
+		    	account.buy_or_sell(SELL, UPDATE, quote, lot, this);
 
 		    }
 		    break;
@@ -251,7 +251,7 @@ public class MeanReversionNEq2 extends Strategy{
 				this.desiredState=States.S0;
 				this.StrategyState = States.STemp;
 				this.possiblePrice = 0;	
-				account.option_buy_or_sell(SELL, CLOSE, quote, lot, "C", this, true);
+				account.buy_or_sell(SELL, CLOSE, quote, lot, this);
 				// We clear the mean at the end of every cycle
 				clearMean(); 
 				this.isTradeable = false;
@@ -268,7 +268,7 @@ public class MeanReversionNEq2 extends Strategy{
 		    	this.desiredState=States.S4;
 		    	this.StrategyState = States.STemp;	
 		    	this.possiblePrice=(this.price + currentAsk)/(2.0);   
-		    	account.option_buy_or_sell(BUY, OPEN, quote, lot, "C", this, false);
+		    	account.buy_or_sell(BUY, UPDATE, quote, lot, this);
 
 		    }
             
@@ -285,7 +285,7 @@ public class MeanReversionNEq2 extends Strategy{
 				this.desiredState=States.S0;
 				this.StrategyState = States.STemp;
 				this.possiblePrice = 0;	
-				account.option_buy_or_sell(SELL, CLOSE, quote, 2*lot, "P", this, true);
+				account.buy_or_sell(BUY, CLOSE, quote, 2*lot, this);
 				clearMean();
 				this.isTradeable = false;
 			} else {
@@ -306,7 +306,7 @@ public class MeanReversionNEq2 extends Strategy{
 				this.desiredState=States.S0;
 				this.StrategyState = States.STemp;
 				this.possiblePrice = 0;	  
-				account.option_buy_or_sell(SELL, CLOSE, quote, lot, "C", this, true);
+				account.buy_or_sell(SELL, CLOSE, quote, 2*lot, this);
 				clearMean();
 				this.isTradeable = false;
             } else {
@@ -394,7 +394,7 @@ public class MeanReversionNEq2 extends Strategy{
 		    	this.desiredState = States.S0;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
-		    	account.option_buy_or_sell(SELL, CLOSE, lastQuote, lot, "P", this, true);
+		    	account.buy_or_sell(BUY, CLOSE, lastQuote, lot, this);
 		    	clearMean();
 		    	break;
 		    	
@@ -403,13 +403,13 @@ public class MeanReversionNEq2 extends Strategy{
 		    	this.desiredState = States.S0;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
-		    	account.option_buy_or_sell(SELL, CLOSE, lastQuote, lot, "C", this, true);
+		    	account.buy_or_sell(SELL, CLOSE, lastQuote, lot, this);
 		    	clearMean();
 		    	break;
 		    	
 		    case S3:
 		         // we need to get in the opposite position
-		    	 
+		    	/* 
 		    	 delta = account.calculatePortfolioDelta(lastQuote, this);
 				 log.info("Position Delta is " + delta);
 				 //log.info("Position value is " + account.getPortfolioValue(lastQuote, this, true));
@@ -425,9 +425,17 @@ public class MeanReversionNEq2 extends Strategy{
 			     // so a reasonable approximation is to buy 2*new_lot*100. 
 			     // For example if total delta is 10,000 and we assume that the option we want to buy has a 0.5 delta then we are buying 20,000 options. 
 				 account.option_buy_or_sell(BUY, OPEN, lastQuote, 2*new_lot*100, "C", this, true);
+				 */
+		    	log.info(" Attempting to close position on symbol" + symbol);
+		    	this.desiredState = States.S0;
+			    this.currentState= StrategyState;
+		    	this.StrategyState=States.STemp;
+		    	account.buy_or_sell(BUY, CLOSE, lastQuote, 2*lot, this);
+		    	clearMean();
 				 break;
 				 
 		    case S4:
+		    	/*
 		    	// we need to get in the opposite position
 		    	 delta = account.calculatePortfolioDelta(lastQuote, this);
 				 log.info("Position Delta is " + delta);
@@ -443,6 +451,13 @@ public class MeanReversionNEq2 extends Strategy{
 			     // so a reasonable approximation is to buy 2*new_lot*100. 
 			     // For example if total delta is 10,000 and we assume that the option we want to buy has a 0.5 delta then we are buying 20,000 options.
 				 account.option_buy_or_sell(BUY, OPEN, lastQuote, 2*new_lot*100, "P", this, true);
+				 */
+		    	log.info(" Attempting to close position on symbol" + symbol);
+		    	this.desiredState = States.S0;
+			    this.currentState= StrategyState;
+		    	this.StrategyState=States.STemp;
+		    	account.buy_or_sell(SELL, CLOSE, lastQuote, 2*lot, this);
+		    	clearMean();
 				 break;
 		    	
 		    default:
@@ -465,7 +480,7 @@ public class MeanReversionNEq2 extends Strategy{
 		    	this.desiredState = States.S0;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
-		    	account.option_buy_or_sell(SELL, CLOSE, lastQuote, lot, "P", this, true);
+		    	account.buy_or_sell(BUY, CLOSE, lastQuote, lot, this);
 		    	this.possiblePrice = 0;	
 		    	clearMean();
 		    	break;
@@ -475,7 +490,7 @@ public class MeanReversionNEq2 extends Strategy{
 		    	this.desiredState = States.S0;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
-		    	account.option_buy_or_sell(SELL, CLOSE, lastQuote, lot, "C", this, true);
+		    	account.buy_or_sell(SELL, CLOSE, lastQuote, lot, this);
 		    	this.possiblePrice = 0;	
 		    	clearMean();
 		    	break;
@@ -485,7 +500,7 @@ public class MeanReversionNEq2 extends Strategy{
 		    	this.desiredState = States.S0;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
-		    	account.option_buy_or_sell(SELL, CLOSE, lastQuote, lot, "P", this, true);
+		    	account.buy_or_sell(BUY, CLOSE, lastQuote, 2*lot, this);
 		    	this.possiblePrice = 0;	
 		    	clearMean();
 		    	break;
@@ -496,7 +511,7 @@ public class MeanReversionNEq2 extends Strategy{
 		    	this.desiredState = States.S0;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
-		    	account.option_buy_or_sell(SELL, CLOSE, lastQuote, lot, "C", this, true);
+		    	account.buy_or_sell(SELL, CLOSE, lastQuote, lot, this);
 		    	this.possiblePrice = 0;	
 		    	clearMean();
 		    	break;
@@ -661,8 +676,8 @@ public class MeanReversionNEq2 extends Strategy{
 				this.desiredState=States.S2;
 				this.StrategyState = States.STemp;
 				this.possiblePrice=lastQuote.getAsk();					
-				//account.buy_or_sell(BUY, OPEN, lastQuote, lot, this);
-				account.option_buy_or_sell(BUY, OPEN, lastQuote, lot, "C", this, false);
+				account.buy_or_sell(BUY, OPEN, lastQuote, lot, this);
+				
    			
    		} else {
    			// only open a new position if we are in S0
@@ -678,8 +693,8 @@ public class MeanReversionNEq2 extends Strategy{
 				this.desiredState=States.S1;
 				this.StrategyState=States.STemp;
 				this.possiblePrice=lastQuote.getBid();				
-				//account.buy_or_sell(SELL, OPEN, lastQuote, lot, this);
-				account.option_buy_or_sell(BUY, OPEN, lastQuote, lot, "P", this, false);
+				account.buy_or_sell(SELL, OPEN, lastQuote, lot, this);
+				
    			
    		} else {
    			// only open a new position if we are in S0

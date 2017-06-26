@@ -28,6 +28,7 @@ import com.TraderLight.DayTrader.Strategy.GammaScalping;
 import com.TraderLight.DayTrader.Strategy.ManualStrategy;
 import com.TraderLight.DayTrader.Strategy.MeanReversionNEq2;
 import com.TraderLight.DayTrader.Strategy.MeanReversionStrategy;
+import com.TraderLight.DayTrader.Strategy.StockStrategy;
 import com.TraderLight.DayTrader.Strategy.Strategy;
 import com.TraderLight.DayTrader.Strategy.TrendStrategy;
 import com.TraderLight.DayTrader.TradeMonster.GetStockQuoteTM;
@@ -132,6 +133,12 @@ public class Main {
 			   
 		   } else if ( stock.getStrategyID() == 4) {
 			   Strategy strategy = new MeanReversionNEq2(stock.getSymbol(), stock.getLot(), stock.getChange(),
+						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), 
+						stock.getVolumeVector(), stock);
+			   stock.setStrategy(strategy);
+			   
+		   } else if ( stock.getStrategyID() == 5) {
+			   Strategy strategy = new StockStrategy(stock.getSymbol(), stock.getLot(), stock.getChange(),
 						stock.getTradeable(), account, stock.getLoss(), stock.getProfit(), stock.getImpVol(), 
 						stock.getVolumeVector(), stock);
 			   stock.setStrategy(strategy);
@@ -296,6 +303,9 @@ public class Main {
 				    if (quotes != null) {
 					 // send quote to strategy
 					    for (String quote : quotes) {
+					    	if (quote.contentEquals("")) {
+					    		continue;
+					    	}
 						    newQuote = new Level1Quote(quote);
 						    for (Stock stock : listOfStocks) {
 							    if (stock.getSymbol().contentEquals(newQuote.getSymbol())) {
@@ -344,7 +354,7 @@ public class Main {
 						    e.printStackTrace();
 					    }
 				}
-				if ( ((hour==13) && (min>=57)) ) {
+				if ( ((hour==13) && (min>=58)) ) {
 					//close all positions
 					log.info("-------------------------------");
 					log.info("Closing all positions.........");

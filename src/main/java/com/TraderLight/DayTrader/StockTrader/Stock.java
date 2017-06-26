@@ -697,9 +697,22 @@ public class Stock {
 			// int version of price for ex. AAPL at 135.33 we will start at 135 and increment either by 1 or by 0.5
 			price_new = price_new.subtract(price_new.remainder(new BigDecimal("5.0")));
 		}
-
-		for (int i = -STRIKESNUMBER; i <=STRIKESNUMBER; i++) {
-			strikes.add(price_new.add(increment.multiply(new BigDecimal(i))));
+		
+		// TODO TEMP CODE 
+		// if price is 150 we have to create increments of 2.50 on the way up and increment on 1 in the way down
+		if (this.price == 150) {
+			for (int i = -STRIKESNUMBER; i <= 0; i++) {
+				strikes.add(price_new.add(increment.multiply(new BigDecimal(i))));
+			}
+			for (int i = 1; i <=STRIKESNUMBER; i++) {
+				BigDecimal increment1 = new BigDecimal("2.5");
+				strikes.add(price_new.add(increment1.multiply(new BigDecimal(i))));
+			}
+			
+		} else {
+			for (int i = -STRIKESNUMBER; i <=STRIKESNUMBER; i++) {
+				strikes.add(price_new.add(increment.multiply(new BigDecimal(i))));
+			}
 		}
 
 	}
