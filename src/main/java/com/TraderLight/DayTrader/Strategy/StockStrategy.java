@@ -28,7 +28,7 @@ import com.TraderLight.DayTrader.StockTrader.Stock;
 public class StockStrategy extends Strategy{
 	
 		
-	enum States {S0, S1, S2, S3, S4, STemp, SDelta };
+	enum States {S0, S1, S2, S3, S4, STemp, SDelta, SManual };
 	States StrategyState ;
 	// We use currentState as a place to store the state from which we are coming when we go to STemp
 	// StrategyState will be STemp in that case.
@@ -105,11 +105,6 @@ public class StockStrategy extends Strategy{
 			return;			
 		}
 		
-       if ( (hours >= 14) ) {
-           // this takes care of the fact that sometime we may have some quotes from the previous day in the stream		
-			return;			
-		}
-		
 		mean = calculateMean(quote, lastQuote);
 		lastQuote=quote;	
 	
@@ -153,9 +148,7 @@ public class StockStrategy extends Strategy{
 		   positionValue = account.getPortfolioValue(quote, this, true);
 		   log.info("Position value is " + positionValue);
            log.info("        ");
-           if ( (hours == 7) && (minutes <= 34) ) {
-   			log.info("Not time yet to trade, time is: " + quote.getCurrentDateTime());
-   		   }	
+           
 		}
 		// Do not trade before 7:35
 		if ( (hours == 7) && (minutes <= 30) ) {
@@ -214,7 +207,7 @@ public class StockStrategy extends Strategy{
           				
 				log.info("State S1 attempting to close position at profit on symbol" + quote.getSymbol());				
 				this.currentState = States.S1;
-				this.desiredState=States.S0;
+				this.desiredState=States.SManual;
 				this.StrategyState = States.STemp;
 				this.possiblePrice = 0;				
 				account.buy_or_sell(BUY, CLOSE, quote, lot, this);
@@ -248,7 +241,7 @@ public class StockStrategy extends Strategy{
             					
 				log.info("State S2 attempting to close position at profit on symbol" + quote.getSymbol());            					
 				this.currentState = States.S2;
-				this.desiredState=States.S0;
+				this.desiredState=States.SManual;
 				this.StrategyState = States.STemp;
 				this.possiblePrice = 0;	
 				account.buy_or_sell(SELL, CLOSE, quote, lot, this);
@@ -282,7 +275,7 @@ public class StockStrategy extends Strategy{
 				//log.info("Thread ID is: " + Thread.currentThread().getId());
 
 				this.currentState = States.S3;
-				this.desiredState=States.S0;
+				this.desiredState=States.SManual;
 				this.StrategyState = States.STemp;
 				this.possiblePrice = 0;	
 				account.buy_or_sell(BUY, CLOSE, quote, 2*lot, this);
@@ -303,7 +296,7 @@ public class StockStrategy extends Strategy{
 				//log.info("Thread ID is: " + Thread.currentThread().getId());
 				
 				this.currentState = States.S4;
-				this.desiredState=States.S0;
+				this.desiredState=States.SManual;
 				this.StrategyState = States.STemp;
 				this.possiblePrice = 0;	  
 				account.buy_or_sell(SELL, CLOSE, quote, 2*lot, this);
@@ -367,6 +360,31 @@ public class StockStrategy extends Strategy{
 */			
 
 			break;
+			
+		case SManual:
+			// we can move from SManual only on manual intervention. The move is partially handled by update_strategy but we neede to add code here 
+			// for moving on a specific price.
+			if (openShortPositionWithPrice && (currentBid >= shortPositionPrice))  {
+	
+				log.info("State S0):  attempting to buy one lot of puts for symbol: " + quote.getSymbol() + " at bid " + currentBid);
+				this.currentState = States.S0;
+				this.desiredState=States.S1;
+				this.StrategyState=States.STemp;
+				this.possiblePrice=currentBid;				
+				account.buy_or_sell(SELL, OPEN, quote, lot, this);
+			}			
+			if (openLongPositionWithPrice && (currentAsk <= longPositionPrice))  {
+	    		
+				log.info("State S0  attempting to buy  one lot of calls for symbol: " + quote.getSymbol());
+				this.currentState = States.S0;
+				this.desiredState=States.S2;
+				this.StrategyState = States.STemp;
+				this.possiblePrice=currentAsk;					
+				account.buy_or_sell(BUY, OPEN, quote, lot, this);
+			}
+			
+			break;
+			
 		case STemp:
 			//Nothing to do in this state we are waiting for the order processing to come back
 	    default:
@@ -477,7 +495,7 @@ public class StockStrategy extends Strategy{
 		   	
 		    case S1:
 		    	log.info(" Attempting to close position on symbol" + symbol);
-		    	this.desiredState = States.S0;
+		    	this.desiredState = States.SManual;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
 		    	account.buy_or_sell(BUY, CLOSE, lastQuote, lot, this);
@@ -487,7 +505,7 @@ public class StockStrategy extends Strategy{
 		    	
 		    case S2:
 		    	log.info(" Attempting to close position on symbol" + symbol);
-		    	this.desiredState = States.S0;
+		    	this.desiredState = States.SManual;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
 		    	account.buy_or_sell(SELL, CLOSE, lastQuote, lot, this);
@@ -497,7 +515,7 @@ public class StockStrategy extends Strategy{
 		    	
 		    case S3:
 		    	log.info(" Attempting to close position on symbol" + symbol);
-		    	this.desiredState = States.S0;
+		    	this.desiredState = States.SManual;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
 		    	account.buy_or_sell(BUY, CLOSE, lastQuote, 2*lot, this);
@@ -508,7 +526,7 @@ public class StockStrategy extends Strategy{
 		    case S4:
 		    	
 		    	log.info(" Attempting to close position on symbol" + symbol);
-		    	this.desiredState = States.S0;
+		    	this.desiredState = States.SManual;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
 		    	account.buy_or_sell(SELL, CLOSE, lastQuote, lot, this);
@@ -519,7 +537,7 @@ public class StockStrategy extends Strategy{
 		    case SDelta:
 		    	
 		    	log.info(" Attempting to close position on symbol" + symbol);
-		    	this.desiredState = States.S0;
+		    	this.desiredState = States.SManual;
 			    this.currentState= StrategyState;
 		    	this.StrategyState=States.STemp;
 		    	account.option_buy_or_sell(SELL, CLOSE, lastQuote, lot, "C", this, true);
@@ -669,7 +687,7 @@ public class StockStrategy extends Strategy{
    	}
    	
    	if (openLongPosition) {
-   		if ( (StrategyState == States.S0) ){ 
+   		if ( (StrategyState == States.S0) || (StrategyState == States.SManual) ){ 
    			
    			log.info("State S0  attempting to buy  one lot of calls for symbol: " + symbol);
 				this.currentState = States.S0;
@@ -686,7 +704,7 @@ public class StockStrategy extends Strategy{
    	}
    	
    	if (openShortPosition) {
-   		if ( (StrategyState == States.S0)  ){
+   		if ( (StrategyState == States.S0) || (StrategyState == States.SManual) ){
    			
    			log.info("State S0:  attempting to sell one lot of puts for symbol: " + symbol);
 				this.currentState = States.S0;
@@ -704,7 +722,7 @@ public class StockStrategy extends Strategy{
    	
    	if (openLongPositionWithPrice) {
    		// Price  has to be specified otherwise nothing to do,also we need to be in S0
-   		if ( (longPrice != 0) && (StrategyState == States.S0) ){
+   		if ( (longPrice != 0) && ( (StrategyState == States.S0) || (StrategyState == States.SManual)) ){
    			this.openLongPositionWithPrice = true;
    			this.longPositionPrice = longPrice;
    			
@@ -719,7 +737,7 @@ public class StockStrategy extends Strategy{
    	
    	if (openShortPositionWithPrice) {
    		// Price  has to be specified otherwise nothing to do,also we need to be in S0
-   		if ( (shortPrice != 0) && (StrategyState == States.S0) ){
+   		if ( (shortPrice != 0) && ( (StrategyState == States.S0) || (StrategyState == States.SManual)) ){
    			this.openShortPositionWithPrice = true;
    			this.shortPositionPrice = shortPrice;
    			
