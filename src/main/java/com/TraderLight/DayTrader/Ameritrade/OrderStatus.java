@@ -31,7 +31,7 @@ public class OrderStatus {
     	XMLNode[] fills;
     	String q;
     	int quantity=0;
-		String str="https://apis.tdameritrade.com/apps/100/OrderStatus;jsessionid="+SessionControl.getSessionid()+"?source=MAVI"+"&orderid="+order_id;
+		String str="https://apis.tdameritrade.com/apps/100/OrderStatus;jsessionid="+SessionControl.getSessionid()+"?source="+SessionControl.getSourceApp()+"&orderid="+order_id;
 		String res=URLUtil.getfromURL(str);		
 		log.info("Response is " + res);
 		XMLNode root=new XMLNodeBuilder(res).getRoot();
